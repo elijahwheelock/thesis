@@ -18,6 +18,8 @@
 \newcommand{\red}[1]{\textcolor{red}{#1}}
 \newcommand{\todo}{\red{TODO}}
 
+\newcommand{\comment}[2]{\textbf{#1} \textcolor{blue}{#2}}
+
 \title{An Overview of Superoptimizers}
 \author{Elijah Wheelock}
 \date{May 2024}
@@ -38,11 +40,11 @@
 \chapter*{Abstract} % If your abstract is longer than a page, there may be a formatting issue.
 
 % Reiterate in introduction
-Superoptimization is a family of compilation techniques which seek to improve the characteristics of computer programs by computational (non-heuristic) means.
+Superoptimization is a family of compilation techniques which seek to improve the characteristics of computer programs by computational (\comment{non-heuristic}{I'd be careful about this claim since many superoptimizers have heuristics}) means.
 This is seen as distinct from "ordinary" optimization (perhaps more properly called meliorization), which seeks to improve programs by application of a large number of rewrite rules.
-Another view is that superoptimization recharacterizes the problem of program improvement as a search problem, rather than an equational reasoning problem.
+Another view is that superoptimization recharacterizes the problem of program improvement as \comment{a search problem, rather than an equational reasoning problem}{maybe briefly explain why this is desirable}.
 More broadly, superoptimization may be seen as an application of the techniques of program synthesis to the domain of concretely-realized (assembly code/IR) programs.
-In practice, there is an infinite number of potential programs which compute the desired result, many of which are intuitively non-obvious.
+In practice, there is an infinite number of potential programs which compute the desired result, many of which are \comment{intuitively non-obvious}{I'm not sure whether this phrase means it is intuitive that they aren't obvious or that they are not intuitively obvious}.
 Therefore it is desirable to have special techniques for synthesizing (generating), pruning, and verifying such candidate programs. 
 In this paper, we will survey a variety of methods from the literature that have been used for these ends.
 
@@ -58,20 +60,20 @@ In this paper, we will survey a variety of methods from the literature that have
 % cite some stuff! E.g. Turing on undecidability
 % probably anything a CS senior wouldn't know should be cited
 
-Since the introduction of the term by \cite{massalin1987superoptimizer}, a wide variety of techniques have been harnessed to the goal of superoptimization.
+\comment{Since}{Prior to this I would add a bit more introduction about what program optimization is and how and why it is done classically} the introduction of the term by \cite{massalin1987superoptimizer}, a wide variety of techniques have been harnessed to the goal of superoptimization.
 These techniques may be broadly categorized in several ways, including:
-    the goals (optimization criteria) of the superoptimization system,
+    \comment{the}{These are set out as an enumerated list in your source code, I would make them a list in the generated document too} goals (optimization criteria) of the superoptimization system,
     the techniques used for synthesis and/or verification of generated programs,
     the problem domain,
     and the capabilities/limitations of the system.
 In this paper we will focus on categorizing systems by synthesis technique, but first it seems advisable to briefly cover the other possible taxonomies.
 
 In writing any kind of optimizer, one must first select a criterion by which to rank candidate programs.
-There are a few potential measures by which to do so.
+There are \comment{a few potential measures by which to do so}{Related to the comment above, these are independent of superoptimization so I would introduce them first in the context of classical optimization}.
 Perhaps the most immediately salient is performance: 
     in almost every application, faster programs are preferred to slower ones.
 Another common goal is to reduce resource use: 
-    for example, a program which needs less memory is preferable to one which uses more.
+    for example, a program which needs less memory is \comment{preferable}{typical practice is to find something to cite for these kinds of claims (maybe just pick some paper that introduce a technique for minimizing memory usage)} to one which uses more.
 There are also other resources whose conservation might be desired, for example 
     functional units on an FPGA, 
     power or space on a hardware design, 
@@ -117,7 +119,7 @@ This is potentially very expensive, but if done correctly guarantees the correct
 \red{TODO}
 
 Most interestingly for our purposes, superoptimizers can be categorized by the approach they take to synthesis of superoptimized programs.
-This is the measure on which published systems vary most widely, and the selection of approach is perhaps the most salient question for the authors of new systems.
+This is the measure on which published systems vary most widely, and the selection of approach is \comment{perhaps}{I've noticed this throughout--you can drop a lot of these qualifiers to make it sound more forceful} the most salient question for the authors of new systems.
 These approaches vary widely in sophistication, complexity, and power.
 
 Perhaps the simplest possible approach, pioneered by \cite{massalin1987superoptimizer}, is simple enumeration. 
@@ -181,12 +183,12 @@ The technique is to line up all possible programs in order of length, testing ea
 \red{TODO} merge into symbolic
 
 \subsubsection{Superoptimizer -- A Look at the Smallest Program}
-Happily, the earliest published superoptimizer is also among the simplest, and so will serve admirably as an introduction to the idea. 
+Happily, the earliest published superoptimizer is also among the simplest, and so will serve admirably as an \comment{introduction to the idea}{at some point you should lay out a more complete/formal problem statement. You can use this first paper to do this but then I would talk about it earlier, in the introduction}. 
 The word "superoptimizer" dates from Henry Massalin's paper, "Superoptimizer -- A Look at the Smallest Program" \cite{massalin1987superoptimizer}.
 Massalin's superoptimizer, like most superoptimizers, operates in three main phases: synthesis, pruning (optional), and verification.
 
-The synthesis stage in this system is, perhaps, the simplest imaginable: simply write down all assembly programs in alphabetical order.
-The advantage of this approach is that if a result is found, it will be the smallest possible code that can compute the desired result, and therefore likely relatively fast as well;
+The \comment{synthesis stage}{introduce the general framework of synthesis/verification/pruning explicitly before this} in this system is, perhaps, the simplest imaginable: simply write down all assembly programs in alphabetical order.
+The advantage of this approach is that if a result is found, it will be the smallest possible code that can compute the desired result, and therefore \comment{likely relatively fast}{This could do with some explanation or a citation} as well;
 the disadvantage is that the search space blows up exponentially with the length of function sought, making it intractable for all but the smallest code segments.
 
 The pruning stage is also relatively simple. There are some obviously-spurious code sequences if what is sought is the shortest possible correct code, e.g. "move X,Y; move Y,X".
@@ -207,19 +209,19 @@ Such is the strategy adopted by Bansal and Aiken \cite{bansal2006peephole}.
 
 %FIXME
 This system works by harvesting code segments from a large corpus of existing programs, with certain restrictions, and superoptimizing them. 
-In contrast to Massalin's superoptimizer, it uses a runtime-estimate based cost function, as opposed to length-based.
+In contrast to Massalin's superoptimizer, it uses a \comment{runtime-estimate based cost function}{elaborate on this}, as opposed to length-based.
 
 The selection of code segments is somewhat involved.
-One problem that might occur with superoptimizing a code segment is that it might disturb invariants relied on by other parts of the program.
+One problem that might occur with superoptimizing a code segment is that it might \comment{disturb invariants relied on by other parts of the program}{a small example of this would help clarify}.
 When the code segment is selected manually, this is not a problem.
-But for automatic selection, the system has to be confident that the segments won't be jumped into from elsewhere. 
+But for automatic selection, the system has to be confident that the segments won't be \comment{jumped into from elsewhere}{this could also use an example or more explanation}. 
 
 It also uses a different pruning strategy.
 Before testing an instruction sequence, it is first canonicalized by renaming the registers it uses in a consistent way.
 If the canonicalized form has already been checked, then the sequence may be safely pruned.
 
 The verification strategy is similar to Massalin's boolean verifier, but using a SAT solver.
-This approach had become much more practicable in the intervening time between these publications due to algorithmic and hardware advances.
+This approach had become much more practicable in the intervening time between these publications due to \comment{algorithmic and hardware advances}{If this isn't stated in the Bansal/Aiken paper then I would find a citation}.
 
 Bansal and Aiken's system achieves quite impressive results 
     -- a speedup by a factor of between 1.7 and 10, (mean ~4.9) in compute-intensive programs, with a 1-5\% speedup in more general programs, all compared to code nominally already optimized by the compiler.
