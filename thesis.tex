@@ -62,7 +62,7 @@ In this paper, we will survey a variety of methods from the literature that have
 
 \comment{Since}{Prior to this I would add a bit more introduction about what program optimization is and how and why it is done classically} the introduction of the term by \cite{massalin1987superoptimizer}, a wide variety of techniques have been harnessed to the goal of superoptimization.
 These techniques may be broadly categorized in several ways, including:
-    \comment{the}{These are set out as an enumerated list in your source code, I would make them a list in the generated document too} goals (optimization criteria) of the superoptimization system,
+    \comment{the}{These are set out as an enumerated list in your source code, I would make them a list in the generated document too. This applies to most of the other lists in your source code.} goals (optimization criteria) of the superoptimization system,
     the techniques used for synthesis and/or verification of generated programs,
     the problem domain,
     and the capabilities/limitations of the system.
@@ -235,10 +235,10 @@ Bansal and Aiken's system achieves quite impressive results
 \red{TODO}: add background, SAT solver, 
 
 \subsubsection{Denali: A Goal-directed Superoptimizer}
-This paper \cite{joshi2002denali} uses an automated theorem prover to simultaneously synthesize and verify new programs.
-It takes a program in a custom low-level language, expresses it in a symbolic form as a graph of all equivalent ways of computing its output expressions called the E-graph, and formulates the conjecture that "no program of the target architecture computes the values of the goal terms within K cycles" as an input to a satisfiability solver. 
+\comment{This paper}{Normally I would cite by giving the authors' names like you did in the last section} \cite{joshi2002denali} uses an automated theorem prover to simultaneously synthesize and verify new programs.
+It takes a program in a custom low-level language, expresses it in a symbolic form as a graph of all equivalent ways of computing its output expressions \comment{called the E-graph}{I would be inclined to have a separate description of E-graphs, but it depends on the structure of the section}, and formulates the conjecture that "no program of the target architecture computes the values of the goal terms within K cycles" \comment{as an input to a satisfiability solver}{I would reorganize slightly so that this comes right before the explanation below}. 
 
-The graph re-writing uses a fairly standard term-rewriting strategy, with the addition of a notion of equivalence for graph nodes.
+The \comment{graph re-writing}{introduce graph rewriting} uses a fairly standard term-rewriting strategy, with the addition of a notion of equivalence for graph nodes.
 The connections between the E-graph nodes are then translated into clauses for the use of the SAT solver.
 
 The satisfiability step requires a little more detail.
@@ -254,7 +254,7 @@ To do this, Denali uses an additional set of constraints on the times of launchi
 \subsubsection{Unbounded Superoptimization}
 Related to Denali is the work by Jangda and Yorsh in "Unbounded Superoptimization" \cite{jangda2017unbounded}.
 Rather than matching E-graphs, which in the intervening years had been integrated into SMT solvers, it to directly encodes the target program as a logical formula.
-It does this by encoding the input program, treating it as the first candidate output, and "squeezing" it by imposing lower and lower cost bounds on the solver. This "top-down" approach has the advantage that if the superoptimizer is halted early, it can still return a correct output, unlike many superoptimizers which work "bottom-up" and thus start without any candidate programs.
+It does this by encoding the input program, treating it as the first candidate output, and \comment{"squeezing" it by imposing lower and lower cost bounds on the solver}{I would make this a bit more explicit--how exactly are computational bounds encoded and how does the tool decide what bounds to use?}. This "top-down" approach has the advantage that if the superoptimizer is halted early, it can still return a correct output, unlike many superoptimizers which work "bottom-up" and thus start without any candidate programs.
 
 \red{TODO} LLVM phi nodes?
 
@@ -271,7 +271,7 @@ It has three main components:
     a synthesizer using counterexample-guided interactive synthesis,
     and a verifier using an SMT solver.
 
-\red{TODO}: cite Solar-Lezama et al. "Combinatorial Sketching for Finite Programs"
+\red{TODO}: \comment{cite}{Move this citation to the section where you describe CEGIS} Solar-Lezama et al. "Combinatorial Sketching for Finite Programs"
 \red{TODO}: cite Gulwani et al. "Synthesis of loop-free programs"?
 
 Souper uses a custom IR analogous to a purely-functional subset of LLVM IR without control flow\footnote{Some information about control flow external to the code section under consideration is preserved, but control flow operations within a code section are forbidden.}, represented for computational purposes as a directed acyclic dataflow graph.
@@ -281,18 +281,18 @@ The operands of programs in this IR are considered only as bitvectors (parameter
 \red{TODO:} a bit on the synthesizer
 
 \red{TODO}: Threats to soundness:
-    Souper bugs,
+    \comment{Souper bugs}{Bugs in the synthesis tool itself are common to all approaches--you can bring it up here since Souper is purportedly more ``production-ready'' than others but I would make it clear that this is not unique to Souper},
     LLVM bugs,
-    Solver bugs,
-    Undefined behavior: One issue with relying on the semantics of LLVM is that there are areas of undefined behavior!
+    \comment{Solver bugs}{Same as the comment above. I would consider separating these two from the other two, since LLVM bugs and undefined behavior are more unique to Souper},
+    Undefined behavior: One issue with relying on the semantics of LLVM is that there are \comment{areas of undefined behavior}{elaborate}!
 
 \subsubsection{Dataflow-Based Pruning for Speeding up Superoptimization}
 \red{TODO:} a little bit about why pruning holes early is desirable.
 
-This paper \cite{mukherjee2020dataflow} enhances Souper with an additional family of pruning strategies based on dataflow reasoning. 
-Pruning spurious candidates as early as possible is obviously highly desirable.
-This paper uses both forward and backward dataflow analysis techniques to prove candidate expressions incorrect before they are fully substantiated (while they still contain "holes", constants or sub-expressions which have yet to be synthesized).
-The forward techniques are known bits,
+\comment{This paper}{Similar to Denali, cite by tool or author name} \cite{mukherjee2020dataflow} enhances Souper with an additional family of pruning strategies based on dataflow reasoning. 
+Pruning spurious candidates as early as possible is \comment{obviously highly desirable}{I know this seems obvious, but I would still explain why}.
+This paper uses both \comment{forward and backward}{sometimes it helps to use italics or quotes to identify terms you don't expect the reader to be familiar with--it signals that they can expect a definition to follow which makes it easier to read} dataflow analysis techniques to prove candidate expressions incorrect before they are fully substantiated (while they still contain "holes", constants or sub-expressions which have yet to be synthesized).
+The \comment{forward techniques}{I would give a higher-level description of the distinction between forward and backward before introducing the specific techniques} are known bits,
                            integer ranges, and
                            bivalent bits.
 The backward techniques are required bits,
@@ -304,7 +304,7 @@ The backward techniques are required bits,
 The known-bits analysis works by proving that certain bits of the output of the candidate program are necessarily incompatible with the specification.
 For a simple example, if the specification ends by setting the rightmost bit of the output to 1, then any candidate which ends with a left shift can be immediately dismissed.
 The integer ranges analysis is similar, but considering the magnitudes of outputs instead of their bits.
-The bivalent-bits analysis extends known-bit analysis by proving that certain bits of the candidate are indeterminate while the corresponding bits of the input are known.
+The bivalent-bits analysis extends known-bit analysis by proving that certain bits of the candidate are \comment{indeterminate}{Does this mean these bits don't matter? If so I would clarify that} while the corresponding bits of the input are known.
 
 The required-bits analysis works by proving that certain bits of the input to the specification are \emph{required}, i.e. that changing its value can change the output. If such an input is not used in a candidate program, then that program can be safely pruned; e.g. if the specification is $x + y$, but the candidate is $x + C$ where $C$ is constant.
 The forced-bits analysis is in a way analogous to the known-bits analysis, working in the opposite direction. It works by finding conflicts in candidates with symbolic (not-yet-synthesized) constants. Intuitively, it can be thought of as finding inconsistencies in a system of equations based on comparing the candidate to the specification. %rephrase?
@@ -321,20 +321,20 @@ The forced-bits analysis is in a way analogous to the known-bits analysis, worki
 \subsubsection{Stochastic Superoptimization}
 Heretofore we have limited ourselves to superoptimizers which operate in a deterministic regime.
 However, there is another way to think of the problem: as an unguided search in a high-dimensional, irregular search space.
-While this way of thinking loses some desirable properties from more deterministic approaches, such as guaranteed progress or "solutions" for small problems, it also unlocks a variety of techniques for use in superoptimization, which may scale better than deterministic techniques.
+While this way of thinking loses some desirable properties from more deterministic approaches, such as guaranteed progress or "solutions" for small problems, it also unlocks a variety of techniques for use in superoptimization, which may \comment{scale}{I know this is common terminology in a lot of fields, but I would still mention what this means. Maybe give a brief description of the limitations on program length of the symbolic techniques} better than deterministic techniques.
 
 \red{TODO:} Explain MCMC a bit more clearly.
 
-One such technique is markov chain monte carlo sampling, pioneered by \cite{schkufza2013stoke}. 
-Essentially, the strategy works by drawing candidate rewrites from a distribution with favorable properties (in this case, a bias toward low cost).
-The candidates are then scored by a cost function taking into account estimates of both and performance.
+One such technique is markov chain monte carlo sampling, \comment{pioneered}{I'd be careful with the wording--MCMC is considerably older than STOKE, but STOKE was the first to aply it it superoptimization} by \cite{schkufza2013stoke}. 
+Essentially, the strategy works by drawing candidate rewrites from a distribution with \comment{favorable properties}{add some math!} (in this case, a bias toward low cost).
+The candidates are then scored by a cost function taking into account estimates of \comment{both and}{missing a word, presumably ``correcness''} performance.
 A candidate which scores better than the current best is always accepted; a worse one is accepted with probability proportional to $1/e^(c'/c)$, where $c$ is the cost of the old candidate and $c'$ is the cost of the new one.
 
 \red{TODO:} 
 
 \red{TODO:} Explain hamming distance. DONE
 
-Correctness is estimated by the hamming distance (bitwise difference: the number of corresponding bits that differ between the two strings, plus insertions, if needed) between the outputs of the candidate and those of the specification.
+Correctness is estimated by the hamming distance (bitwise difference: the number of corresponding bits that differ between the two strings, plus insertions, if needed) between the outputs of the candidate and those of the \comment{specification}{describe the way test cases are generated}.
 Cost is estimated by the sum of the (average) latencies of the instructions in the candidate.
 
 There are two phases to the search performed by \textsc{Stoke}:
@@ -349,19 +349,19 @@ The top 20\% of candidates are then formally verified and tested for performance
 One problem with the kind of bitwise verification accomplished by SMT solvers is that in some sense it's actually too exact.
 This has the disadvantages both of added expense for verifying more than necessary, and in rejecting correct but inexactly equivalent candidate optimizations.
 There are multiple reasons that successful optimizations might not be bitwise equivalent to the specification
-    -- for example, the differences might only appear in a region of input space which is forbidden for some reason.
+    -- for example, the differences might only appear in a region of input space which is forbidden for \comment{some reason}{add an example}.
 While there are a number of existing efforts to produce relaxation conditions from annotations given by the programmer to a traditional compiler, another possibility is to attempt to have the compiler generate them itself for review by the programmer.
 Such is the project of \cite{sharma2015conditionally}.
     
 This paper expands on \textsc{Stoke} with the intention of proving correctness more rigorously than the test-case based approach it originally used.
 It does this by augmenting it with a new verification algorithm, which they call \textsc{Cove}.
-This algorithm works using a formal verification system for x86 assembly created by the same authors \cite{sharma2013ddec} (modulo certain pointer aliasing changes) to generate verification conditions for the candidate program, which are then fed into \textsc{Cove} to produce a set of preconditions that make the target and candidate equivalent. These preconditions are then presented to the programmer, and if accepted, the candidate program is considered correct.
+This algorithm works using a formal verification system for x86 assembly created by the same authors \cite{sharma2013ddec} (modulo certain pointer aliasing changes) to generate verification conditions for the candidate program, which are then \comment{fed into \textsc{Cove}}{the paragraph reads like you're currently describing Cove, so saying the results are fed into Cove is a bit confusing} to produce a set of preconditions that make the target and candidate equivalent. These preconditions are then presented to the programmer, and if accepted, the candidate program is \comment{considered correct}{my immediate question is whether it's actually easier for a programming to look at preconditions than it is for them to look at generated candidate programs}.
     
-The aliasing changes mentioned above constitute a relaxation of the formal verification process -- it turns out that reasoning about aliasing is a relatively expensive part of the verifier, and that it is the grounds for rejection for a large number of candidates. Therefore, rather than considering every possible case of pointer aliasing, only those which are relevant in the traces for the given test cases are considered. This does not affect the overall correctness of \textsc{Cove}, since the derived non-aliasing assumptions are included (explicitly or implicitly) in the final set of preconditions presented to the user.
+The aliasing changes mentioned above constitute a relaxation of the formal verification process -- it turns out that reasoning about \comment{aliasing}{I wouldn't assume people know this term} is a relatively expensive part of the verifier, and that it is the grounds for rejection for a large number of candidates. Therefore, rather than considering every possible case of pointer aliasing, only those which are relevant in the traces for the given test cases are considered. This does not affect the overall correctness of \textsc{Cove}, since the derived non-aliasing assumptions are included (explicitly or implicitly) in the final set of preconditions presented to the user.
     
-The preconditions are generated from the verification conditions via abstract interpretation by conjuncting abstractions of the test inputs on which the target and candidate are equivalent in progressively more-restrictive abstract domains. The domains used in \textsc{Cove} are bitvector alignment to 1, 2, 4, 8, 16, 32, and 64 bytes, bit-vector equalities, and bit-vector intervals (interpreted as intervals of unsigned integers).
+The preconditions are generated from the verification conditions via \comment{abstract interpretation}{describe abstract interpretation briefly} by \comment{conjuncting}{conjoining} abstractions of the test inputs on which the target and candidate are equivalent in progressively more-restrictive abstract domains. The domains used in \textsc{Cove} are bitvector alignment to 1, 2, 4, 8, 16, 32, and 64 bytes, bit-vector equalities, and bit-vector intervals (interpreted as intervals of unsigned integers).
     
-\red{TODO:} ask Greg about what exactly the abstraction function is doing
+\red{TODO:} ask Greg about what exactly the \comment{abstraction function is doing}{the abstraction function lifts a set of concrete values to the abstract domain--if you think of the abstract domain as some \emph{structured} set of inputs, then the abstract function enforces that structure while preserving overapproximation. The concretization function is the opposite--it ``forgets'' the structure of the abstract domain.}
 
 \red{TODO:} a little background on abstract interpretation
 
@@ -385,9 +385,9 @@ Verification is accomplished by an equivalence requirement in the pruning step.
     
 \textsc{Lens} is an enumerative algorithm which uses a bi-directional (pre- and post-conditional) pruning strategy to cut down the search space.
 It works by considering the space of programs to enumerate as composed of a set of equivalence classes of input-output behaviors on a reduced bitwidth, and attempting to bridge the gap between the input and the output of the specification.
-If such a bridge is found, it is verified using a constraint solver; if accepted, it's returned, but if rejected, the constraint solver returns an input counterexample, which is then used as a test case to prune further candidates.
+If such a bridge is found, it is verified using a constraint solver; if accepted, it's returned, but if rejected, the constraint solver returns an input counterexample, which is then used as a test case to prune \comment{further candidates}{The description of Lens could be more detailed}.
 
-.he sliding window strategy is fairly simple; it randomly picks a window of the program to superoptimize, attempts to improve it, and repeats until no position of the window yields an improvement to the program.
+The sliding window strategy is fairly simple; it randomly picks a window of the program to superoptimize, attempts to improve it, and repeats until no position of the window yields an improvement to the program.
 There is one additional detail that bears mentioning: 
 this window decomposition allows the verification step to use the context of the surrounding program when checking equivalence; rather than checking equivalence of the candidate with the target, it can check the equivalence of the sequence prefix-candidate-postfix with the sequence prefix-target-postfix.
 This allows a few additional optimizations.
