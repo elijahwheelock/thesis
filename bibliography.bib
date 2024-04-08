@@ -1,0 +1,409 @@
+@article{
+    massalin1987superoptimizer,
+    author = {Massalin, Henry},
+    title = {Superoptimizer: A Look at the Smallest Program},
+    year = {1987},
+    issue_date = {Oct. 1987},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    volume = {15},
+    number = {5},
+    issn = {0163-5964},
+    url = {https://doi.org/10.1145/36177.36194},
+    doi = {10.1145/36177.36194},
+    abstract = {Given an instruction set, the superoptimizer finds the shortest program to compute a function. Startling programs have been generated, many of them engaging in convoluted bit-fiddling bearing little resemblance to the source programs which defined the functions. The key idea in the superoptimizer is a probabilistic test that makes exhaustive searches practical for programs of useful size. The search space is defined by the processor's instruction set, which may include the whole set, but it is typically restricted to a subset. By constraining the instructions and observing the effect on the output program, one can gain insight into the design of instruction sets. In addition, superoptimized programs may be used by peephole optimizers to improve the quality of generated code, or by assembly language programmers to improve manually written code.},
+    annotate = {
+        This is by all accounts the original paper on superoptimization. It follows a relatively simple approach of enumerative search, followed by heuristic testing, followed by (optionally) a boolean verifier.
+    },
+    journal = {SIGARCH Comput. Archit. News},
+    month = {oct},
+    pages = {122–126},
+    numpages = {5}
+}
+
+@inproceedings{
+    schkufza2013stoke,
+    author = {Schkufza, Eric and Sharma, Rahul and Aiken, Alex},
+    title = {Stochastic Superoptimization},
+    year = {2013},
+    isbn = {9781450318709},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    url = {https://doi.org/10.1145/2451116.2451150},
+    doi = {10.1145/2451116.2451150},
+    annotate = { This paper has been relatively influential. It reformulates superoptimization as a stochastic search problem. It uses markov chain monte carlo sampling to synthesize candidate programs, followed by random testing for verification. },
+    booktitle = {Proceedings of the Eighteenth International Conference on Architectural Support for Programming Languages and Operating Systems},
+    pages = {305–316},
+    numpages = {12},
+    keywords = {stochastic search, x86, 64-bit, smt, markov chain monte carlo, x86-64, mcmc, binary, superoptimization},
+    location = {Houston, Texas, USA},
+    series = {ASPLOS '13}
+}
+
+@inproceedings{
+    phothilimthana2016scaling,
+    author = {Phothilimthana, Phitchaya Mangpo and Thakur, Aditya and Bodik, Rastislav and Dhurjati, Dinakar},
+    title = {Scaling up Superoptimization},
+    year = {2016},
+    annotate = { This paper uses multiple techniques for synthesis in a "cooperative superoptimizer". It uses a bi-directional (pre- and post-conditional) pruning strategy to cut down the search space, a sliding-window strategy to decompose programs too large to superoptimize directly, and a synthesizer combining communicating symbolic, stochastic, and enumerative search programs. Verification is accomplished by an equivalence requirement in the pruning step. },
+    isbn = {9781450340915},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    url = {https://doi.org/10.1145/2872362.2872387},
+    doi = {10.1145/2872362.2872387},
+    abstract = {Developing a code optimizer is challenging, especially for new, idiosyncratic ISAs. Superoptimization can, in principle, discover machine-specific optimizations automatically by searching the space of all instruction sequences. If we can increase the size of code fragments a superoptimizer can optimize, we will be able to discover more optimizations. We develop LENS, a search algorithm that increases the size of code a superoptimizer can synthesize by rapidly pruning away invalid candidate programs. Pruning is achieved by selectively refining the abstraction under which candidates are considered equivalent, only in the promising part of the candidate space. LENS also uses a bidirectional search strategy to prune the candidate space from both forward and backward directions. These pruning strategies allow LENS to solve twice as many benchmarks as existing enumerative search algorithms, while LENS is about 11-times faster.Additionally, we increase the effective size of the superoptimized fragments by relaxing the correctness condition using contexts (surrounding code). Finally, we combine LENS with complementary search techniques into a cooperative superoptimizer, which exploits the stochastic search to make random jumps in a large candidate space, and a symbolic (SAT-solver-based) search to synthesize arbitrary constants. While existing superoptimizers consistently solve 9--16 out of 32 benchmarks, the cooperative superoptimizer solves 29 benchmarks. It can synthesize code fragments that are up to 82\% faster than code generated by gcc -O3 from WiBench and MiBench.},
+    booktitle = {Proceedings of the Twenty-First International Conference on Architectural Support for Programming Languages and Operating Systems},
+    pages = {297–310},
+    numpages = {14},
+    keywords = {SMT, program synthesis, superoptimization},
+    location = {Atlanta, Georgia, USA},
+    series = {ASPLOS '16}
+}
+
+@inproceedings{
+    wingbermuehle2014memory,
+    author = {Wingbermuehle, Joseph G. and Cytron, Ron K. and Chamberlain, Roger D.},
+    title = {Superoptimization of Memory Subsystems},
+    year = {2014},
+    annotate = {This paper superoptimizes memory subsystems for FPGAs using an old-bachelor acceptance strategy to synthesize a high-level description of the memory system for a given address trace. It scores candidates by a cost function approximating their total resource cost. It employs a kind of 'attention' strategy, whereby subsystems are preferentially mutated based on their cost, with higher cost subsystems receiving more attention.},
+    isbn = {9781450328777},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    url = {https://doi.org/10.1145/2597809.2597816},
+    doi = {10.1145/2597809.2597816},
+    abstract = {The disparity in performance between processors and main memories has led computer architects to incorporate large cache hierarchies in modern computers. Because these cache hierarchies are designed to be general-purpose, they may not provide the best possible performance for a given application. In this paper, we determine a memory subsystem well suited for a given application and main memory by discovering a memory subsystem comprised of caches,scratchpads, and other components that are combined to provide better performance. We draw motivation from the superoptimization of instruction sequences, which successfully finds unusually clever instruction sequences for programs. Targeting both ASIC and FPGA devices, we show that it is possible to discover unusual memory subsystems that provide performance improvements over a typical memory subsystem.},
+    booktitle = {Proceedings of the 2014 SIGPLAN/SIGBED Conference on Languages, Compilers and Tools for Embedded Systems},
+    pages = {145–154},
+    numpages = {10},
+    keywords = {cache, superoptimization},
+    location = {Edinburgh, United Kingdom},
+    series = {LCTES '14}
+}
+
+@inproceedings{
+    jangda2017unbounded,
+    author = {Jangda, Abhinav and Yorsh, Greta},
+    title = {Unbounded Superoptimization},
+    year = {2017},
+    annotate = {This paper uses an SMT solver to superoptimize ARM assembly sequences. It moves the synthesis step into the solver by adding a cost constraint to the SMT problem.},
+    isbn = {9781450355308},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    url = {https://doi.org/10.1145/3133850.3133856},
+    doi = {10.1145/3133850.3133856},
+    abstract = {Our aim is to enable software to take full advantage of the capabilities of emerging microprocessor designs without modifying the compiler. Towards this end, we propose a new approach to code generation and optimization. Our approach uses an SMT solver in a novel way to generate efficient code for modern architectures and guarantee that the generated code correctly implements the source code. The distinguishing characteristic of our approach is that the size of the constraints does not depend on the candidate sequence of instructions. To study the feasibility of our approach, we implemented a preliminary prototype, which takes as input LLVM IR code and uses Z3 SMT solver to generate ARMv7-A assembly. The prototype handles arbitrary loop-free code (not only basic blocks) as input and output. We applied it to small but tricky examples used as standard benchmarks for other superoptimization and synthesis tools. We are encouraged to see that Z3 successfully solved complex constraints that arise from our approach. This work paves the way to employing recent advances in SMT solvers and has a potential to advance SMT solvers further by providing a new category of challenging benchmarks that come from an industrial application domain.},
+    booktitle = {Proceedings of the 2017 ACM SIGPLAN International Symposium on New Ideas, New Paradigms, and Reflections on Programming and Software},
+    pages = {78–88},
+    numpages = {11},
+    keywords = {software synthesis, superoptimization, first order logic, code generation and optimization, constraint solvers, instruction set architecture, SMT solver},
+    location = {Vancouver, BC, Canada},
+    series = {Onward! 2017}
+}
+
+@article{
+    mukherjee2020dataflow,
+    author = {Mukherjee, Manasij and Kant, Pranav and Liu, Zhengyang and Regehr, John},
+    title = {Dataflow-Based Pruning for Speeding up Superoptimization},
+    year = {2020},
+    issue_date = {November 2020},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    volume = {4},
+    number = {OOPSLA},
+    url = {https://doi.org/10.1145/3428245},
+    doi = {10.1145/3428245},
+    abstract = {Superoptimization is a compilation strategy that uses search to improve code quality, rather than relying on a canned sequence of transformations, as traditional optimizing compilers do. This search can be seen as a program synthesis problem: from unoptimized code serving as a specification, the synthesis procedure attempts to create a more efficient implementation. An important family of synthesis algorithms works by enumerating candidates and then successively checking if each refines the specification, using an SMT solver. The contribution of this paper is a pruning technique which reduces the enumerative search space using fast dataflow-based techniques to discard synthesis candidates that contain symbolic constants and uninstantiated instructions. We demonstrate the effectiveness of this technique by improving the runtime of an enumerative synthesis procedure in the Souper superoptimizer for the LLVM intermediate representation. The techniques presented in this paper eliminate 65\% of the solver calls made by Souper, making it 2.32x faster (14.54 hours vs 33.76 hours baseline, on a large multicore) at solving all 269,113 synthesis problems that Souper encounters when optimizing the C and C++ programs from SPEC CPU 2017.},
+    annotate = {This paper gives a method for pruning branches from enumerative synthesis of loop-free LLVM IR by deriving proofs of incorrectness for partially-symbolic candidate expressions.},
+    journal = {Proc. ACM Program. Lang.},
+    month = {nov},
+    articleno = {177},
+    numpages = {24},
+    keywords = {abstract interpretation, program synthesis, pruning, superoptimization}
+}
+
+@inproceedings{
+    bansal2006peephole,
+    author = {Bansal, Sorav and Aiken, Alex},
+    title = {Automatic Generation of Peephole Superoptimizers},
+    year = {2006},
+    isbn = {1595934510},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    url = {https://doi.org/10.1145/1168857.1168906},
+    doi = {10.1145/1168857.1168906},
+    abstract = {Peephole optimizers are typically constructed using human-written pattern matching rules, an approach that requires expertise and time, as well as being less than systematic at exploiting all opportunities for optimization. We explore fully automatic construction of peephole optimizers using brute force superoptimization. While the optimizations discovered by our automatic system may be less general than human-written counterparts, our approach has the potential to automatically learn a database of thousands to millions of optimizations, in contrast to the hundreds found in current peephole optimizers. We show experimentally that our optimizer is able to exploit performance opportunities not found by existing compilers; in particular, we show speedups from 1.7 to a factor of 10 on some compute intensive kernels over a conventional optimizing compiler.},
+    annotate = {This paper uses offline enumerative search to produce a database of equality-preserving peephole optimization rules for use by a conventional compiler optimizer.},
+    booktitle = {Proceedings of the 12th International Conference on Architectural Support for Programming Languages and Operating Systems},
+    pages = {394–403},
+    numpages = {10},
+    keywords = {code selection, peephole optimization, superoptimization},
+    location = {San Jose, California, USA},
+    series = {ASPLOS XII}
+}
+
+@inproceedings{
+    bunel2017learning,
+    title={Learning to superoptimize programs},
+    author={Rudy Bunel and Alban Desmaison and M. Pawan Kumar and Philip H.S. Torr and Pushmeet Kohli},
+    booktitle={International Conference on Learning Representations},
+    year={2017},
+    url={https://openreview.net/forum?id=r1rz6U5lg},
+    annotate = {This paper builds on Stoke by applying a similar method, but augmented by using a machine learning approach to discover an improved distribution of program mutations.},
+}
+
+@inproceedings{
+    shypula2022learning,
+    title={Learning to Superoptimize Real-World Programs},
+    author={Alexander G Shypula and Pengcheng Yin and Jeremy Lacomis and Claire Le Goues and Edward Schwartz and Graham Neubig},
+    year={2022},
+    annotate = {This paper uses a sequence-to-sequence (transformer) model trained on compiler-optimized code (and its own output) to synthesize programs. It uses pre-written test cases, two different SMT verifiers, and human verification (!) to determine program correctness.},
+    booktitle={Deep Learning for Code Workshop},
+    url={https://openreview.net/forum?id=H8q40ouZJWc},
+}
+
+@inproceedings{
+    sharma2015conditionally,
+    author = {Sharma, Rahul and Schkufza, Eric and Churchill, Berkeley and Aiken, Alex},
+    title = {Conditionally Correct Superoptimization},
+    year = {2015},
+    annotate = {This paper uses a symbolic strategy to augment Stoke by relaxing its verifier, by deriving pre- and post- conditions for "conditional correctness" of candidate programs [FIXME from context? or from example?]. This allows it to expand the search space to programs which are not exactly semantically equivalent, but are equivalent in practice.},
+    isbn = {9781450336895},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    url = {https://doi.org/10.1145/2814270.2814278},
+    doi = {10.1145/2814270.2814278},
+    abstract = {The aggressive optimization of heavily used kernels is an important problem in high-performance computing. However, both general purpose compilers and highly specialized tools such as superoptimizers often do not have sufficient static knowledge of restrictions on program inputs that could be exploited to produce the very best code. For many applications, the best possible code is conditionally correct: the optimized kernel is equal to the code that it replaces only under certain preconditions on the kernel's inputs. The main technical challenge in producing conditionally correct optimizations is in obtaining non-trivial and useful conditions and proving conditional equivalence formally in the presence of loops. We combine abstract interpretation, decision procedures, and testing to yield a verification strategy that can address both of these problems. This approach yields a superoptimizer for x86 that in our experiments produces binaries that are often multiple times faster than those produced by production compilers.},
+    booktitle = {Proceedings of the 2015 ACM SIGPLAN International Conference on Object-Oriented Programming, Systems, Languages, and Applications},
+    pages = {147–162},
+    numpages = {16},
+    keywords = {Optimization, Binary Analysis, Markov Chain Monte Carlo, SMT, Superoptimization, x86, Verification, Compilers},
+    location = {Pittsburgh, PA, USA},
+    series = {OOPSLA 2015}
+}
+
+@incollection{
+    sasnauskas2017souper,
+    title = {Souper: A Synthesizing Superoptimizer},
+    annotate = {SMT synthesis},
+    author = {Raimondas Sasnauskas and Yang Chen and Peter Collingbourne and Jeroen Ketema and Jubi Taneja and John Regehr},
+    year = {2017},
+    URL = {https://arxiv.org/abs/1711.04422},
+}
+
+@inproceedings{
+    barthe2013simdloopsynth,
+    author = {Barthe, Gilles and Crespo, Juan Manuel and Gulwani, Sumit and Kunz, Cesar and Marron, Mark},
+    title = {From Relational Verification to SIMD Loop Synthesis},
+    annotate = {Symbolic/concolic synthesis. See section 5.},
+    year = {2013},
+    isbn = {9781450319225},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    url = {https://doi.org/10.1145/2442516.2442529},
+    doi = {10.1145/2442516.2442529},
+    abstract = {Existing pattern-based compiler technology is unable to effectively exploit the full potential of SIMD architectures. We present a new program synthesis based technique for auto-vectorizing performance critical innermost loops. Our synthesis technique is applicable to a wide range of loops, consistently produces performant SIMD code, and generates correctness proofs for the output code. The synthesis technique, which leverages existing work on relational verification methods, is a novel combination of deductive loop restructuring, synthesis condition generation and a new inductive synthesis algorithm for producing loop-free code fragments. The inductive synthesis algorithm wraps an optimized depth-first exploration of code sequences inside a CEGIS loop. Our technique is able to quickly produce SIMD implementations (up to 9 instructions in 0.12 seconds) for a wide range of fundamental looping structures. The resulting SIMD implementations outperform the original loops by 2.0x-3.7x.},
+    booktitle = {Proceedings of the 18th ACM SIGPLAN Symposium on Principles and Practice of Parallel Programming},
+    pages = {123–134},
+    numpages = {12},
+    keywords = {program vectorization, synthesis, relational verification},
+    location = {Shenzhen, China},
+    series = {PPoPP '13},
+}
+
+@article{
+    cooper2002optimizing,
+    author = {Cooper, Keith D. and Subramanian, Devika and Torczon, Linda},
+    title = {Adaptive Optimizing Compilers for the 21st Century},
+    annotate = {Stochastic. No mention of SMT?},
+    year = {2002},
+    issue_date = {August 2002},
+    publisher = {Kluwer Academic Publishers},
+    address = {USA},
+    volume = {23},
+    number = {1},
+    issn = {0920-8542},
+    url = {https://doi.org/10.1023/A:1015729001611},
+    doi = {10.1023/A:1015729001611},
+    abstract = {Historically, compilers have operated by applying a fixed set of optimizations in a predetermined order. We call such an ordered list of optimizations a compilation sequence. This paper describes a prototype system that uses biased random search to discover a program-specific compilation sequence that minimizes an explicit, external objective function. The result is a compiler framework that adapts its behavior to the application being compiled, to the pool of available transformations, to the objective function, and to the target machine.This paper describes experiments that attempt to characterize the space that the adaptive compiler must search. The preliminary results suggest that optimal solutions are rare and that local minima are frequent. If this holds true, biased random searches, such as a genetic algorithm, should find good solutions more quickly than simpler strategies, such as hill climbing.},
+    journal = {J. Supercomput.},
+    month = {aug},
+    pages = {7–22},
+    numpages = {16},
+    keywords = {order of optimization, optimizing compilers, biased random search, configurable compilers}
+}
+
+@inproceedings{
+    joshi2002denali,
+    author = {Joshi, Rajeev and Nelson, Greg and Randall, Keith},
+    title = {Denali: A Goal-Directed Superoptimizer},
+    annotate = {SMT synthesis with symbolic front-end.},
+    year = {2002},
+    isbn = {1581134630},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    url = {https://doi.org/10.1145/512529.512566},
+    doi = {10.1145/512529.512566},
+    abstract = {This paper provides a preliminary report on a new research project that aims to construct a code generator that uses an automatic theorem prover to produce very high-quality (in fact, nearly mathematically optimal) machine code for modern architectures. The code generator is not intended for use in an ordinary compiler, but is intended to be used for inner loops and critical subroutines in those cases where peak performance is required, no available compiler generates adequately efficient code, and where current engineering practice is to use hand-coded machine language. The paper describes the design of the superoptimizer, and presents some encouraging preliminary results.},
+    booktitle = {Proceedings of the ACM SIGPLAN 2002 Conference on Programming Language Design and Implementation},
+    pages = {304–314},
+    numpages = {11},
+    keywords = {superoptimizer, optimizing compiler},
+    location = {Berlin, Germany},
+    series = {PLDI '02}
+}
+
+@article{bacon1994compiler,
+    author = {Bacon, David F. and Graham, Susan L. and Sharp, Oliver J.},
+    title = {Compiler Transformations for High-Performance Computing},
+    annotate = {Not superoptimization. Heuristic compiler optimizations. Cite in intro?},
+    year = {1994},
+    issue_date = {Dec. 1994},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    volume = {26},
+    number = {4},
+    issn = {0360-0300},
+    url = {https://doi.org/10.1145/197405.197406},
+    doi = {10.1145/197405.197406},
+    abstract = {In the last three decades a large number of compiler transformations for optimizing programs have been implemented. Most optimizations for uniprocessors reduce the number of instructions executed by the program using transformations based on the analysis of scalar quantities and data-flow techniques. In contrast, optimizations for high-performance superscalar, vector, and parallel processors maximize parallelism and memory locality with transformations that rely on tracking the properties of arrays using loop dependence analysis.This survey is a comprehensive overview of the important high-level program restructuring techniques for imperative languages, such as C and Fortran. Transformations for both sequential and various types of parallel architectures are covered in depth. We describe the purpose of each transformation, explain how to determine if it is legal, and give an example of its application.Programmers wishing to enhance the performance of their code can use this survey to improve their understanding of the optimizations that compilers can perform, or as a reference for techniques to be applied manually. Students can obtain an overview of optimizing compiler technology. Compiler writers can use this survey as a reference for most of the important optimizations developed to date, and as bibliographic reference for the details of each optimization. Readers are expected to be familiar with modern computer architecture and basic program compilation techniques.},
+    journal = {ACM Comput. Surv.},
+    month = {dec},
+    pages = {345–420},
+    numpages = {76},
+    keywords = {vectorization, locality, superscalar processors, optimization, dependence analysis, parallelism, compilation, multiprocessors}
+}
+
+@inproceedings{
+    churchill2017soundloop,
+    author = {Churchill, Berkeley and Sharma, Rahul and Bastien, JF and Aiken, Alex},
+    title = {Sound Loop Superoptimization for Google Native Client},
+    year = {2017},
+    annotate = {Stochastic synthesis. With loops! Main contribution seems to be verification strategy.},
+    isbn = {9781450344654},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    url = {https://doi.org/10.1145/3037697.3037754},
+    doi = {10.1145/3037697.3037754},
+    abstract = {Software fault isolation (SFI) is an important technique for the construction of secure operating systems, web browsers, and other extensible software. We demonstrate that superoptimization can dramatically improve the performance of Google Native Client, a SFI system that ships inside the Google Chrome Browser. Key to our results are new techniques for superoptimization of loops: we propose a new architecture for superoptimization tools that incorporates both a fully sound verification technique to ensure correctness and a bounded verification technique to guide the search to optimized code. In our evaluation we optimize 13 libc string functions, formally verify the correctness of the optimizations and report a median and average speedup of 25\% over the libraries shipped by Google.},
+    booktitle = {Proceedings of the Twenty-Second International Conference on Architectural Support for Programming Languages and Operating Systems},
+    pages = {313–326},
+    numpages = {14},
+    keywords = {verification, bounded verification, equivalence checking, superoptimization, assembly, data-driven verification, x86-64, native client},
+    location = {Xi'an, China},
+    series = {ASPLOS '17}
+}
+
+@inproceedings{
+    singh2019guided,
+    author = {Singh, Shikhar and Zhang, Mengshi and Khurshid, Sarfraz},
+    title = {Learning Guided Enumerative Synthesis for Superoptimization},
+    year = {2019},
+    annotate = {ML-driven synthesis.},
+    isbn = {978-3-030-30922-0},
+    publisher = {Springer-Verlag},
+    address = {Berlin, Heidelberg},
+    url = {https://doi.org/10.1007/978-3-030-30923-7_10},
+    doi = {10.1007/978-3-030-30923-7_10},
+    abstract = {The field of program synthesis has seen substantial recent progress in new ideas, e.g., program sketching and synthesis modulo pruning, and applications, e.g., in program repair and superoptimization, which is our focus in this paper. The goal of superoptimization is to generate a program which is functionally equivalent to the given program but is optimal with respect to some desired criteria. We develop a learning-based approach to guide the exploration of the space of candidate programs to parts of the space where an optimal solution likely exists. We introduce the techniques of bulk and sequence orderings which enable this directed search. We integrate these machine learning techniques with an enumerative superoptimizer and experimentally evaluate our framework using a suite of subjects. Our findings demonstrate that machine learning techniques can play a useful role in reducing the amount of candidate program space that the enumerative search must to explore in order to find an optimal solution; for the subject programs, the reduction is up to 80\% on average.},
+    booktitle = {Model Checking Software: 26th International Symposium, SPIN 2019, Beijing, China, July 15–16, 2019, Proceedings},
+    pages = {172–192},
+    numpages = {21},
+    keywords = {Superoptimization, Machine learning, Enumerative search, Program synthesis},
+    location = {Beijing, China}
+}
+
+@inproceedings{
+    hui2020deep,
+    title={Deep Symbolic Superoptimization Without Human Knowledge},
+    author={Hui Shi and Yang Zhang and Xinyun Chen and Yuandong Tian and Jishen Zhao},
+    year={2020},
+    annotate={ML synthesis. Arguably not actually superoptimization, since it seems to work only on symbolic expressions. Exclude?},
+    booktitle={International Conference on Learning Representations},
+    url={https://openreview.net/forum?id=r1egIyBFPS}
+}
+
+@misc{
+    cheng2023seer,
+    author={Jianyi Cheng and Samuel Coward and Lorenzo Chelini and Rafael Barbalho and Theo Drane},
+    title={SEER: Super-Optimization Explorer for HLS using E-graph Rewriting with MLIR},
+    annotate={Stochastic synthesis. Alternates rewriting control-flow and data-flow representations. OK to cite preprint?},
+    year={2023},
+    eprint={2308.07654},
+    archivePrefix={arXiv},
+    primaryClass={cs.PL}
+}
+
+@inproceedings{
+    phothilimthana2016greenthumb,
+    author = {Phothilimthana, Phitchaya Mangpo and Thakur, Aditya and Bodik, Rastislav and Dhurjati, Dinakar},
+    title = {GreenThumb: Superoptimizer Construction Framework},
+    annotate = {SMT synthesis, designed to be easy to extend to new ISAs.},
+    year = {2016},
+    isbn = {9781450342414},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    url = {https://doi.org/10.1145/2892208.2892233},
+    doi = {10.1145/2892208.2892233},
+    abstract = {Developing an optimizing compiler backend remains a laborious process, especially for nontraditional ISAs that have been appearing recently. Superoptimization sidesteps the need for many code transformations by searching for the most optimal instruction sequence semantically equivalent to the original code fragment. Even though superoptimization discovers the best machine-specific code optimizations, it has yet to become widely-used. We propose GreenThumb, an extensible framework that reduces the cost of constructing superoptimizers and provides a fast search algorithm that can be reused for any ISA, exploiting the unique strengths of enumerative, stochastic, and symbolic (SAT-solver-based) search algorithms. To extend GreenThumb to a new ISA, it is only necessary to implement an emulator for the ISA and provide some ISA-specific search utility functions.},
+    booktitle = {Proceedings of the 25th International Conference on Compiler Construction},
+    pages = {261–262},
+    numpages = {2},
+    keywords = {Superoptimization, SMT, Program Synthesis},
+    location = {Barcelona, Spain},
+    series = {CC 2016}
+}
+
+@article{
+    mankowitz2023sorting,
+    author = {Mankowitz,  Daniel J. and Michi,  Andrea and Zhernov,  Anton and Gelmi,  Marco and Selvi,  Marco and Paduraru,  Cosmin and Leurent,  Edouard and Iqbal,  Shariq and Lespiau,  Jean-Baptiste and Ahern,  Alex and K\"{o}ppe,  Thomas and Millikin,  Kevin and Gaffney,  Stephen and Elster,  Sophie and Broshear,  Jackson and Gamble,  Chris and Milan,  Kieran and Tung,  Robert and Hwang,  Minjae and Cemgil,  Taylan and Barekatain,  Mohammadamin and Li,  Yujia and Mandhane,  Amol and Hubert,  Thomas and Schrittwieser,  Julian and Hassabis,  Demis and Kohli,  Pushmeet and Riedmiller,  Martin and Vinyals,  Oriol and Silver,  David},
+    title = {Faster sorting algorithms discovered using deep reinforcement learning},
+    year = {2023},
+    annotate = {ML synthesis via reinforcement learning.},
+    volume = {618},
+    ISSN = {1476-4687},
+    url = {http://dx.doi.org/10.1038/s41586-023-06004-9},
+    DOI = {10.1038/s41586-023-06004-9},
+    number = {7964},
+    journal = {Nature},
+    publisher = {Springer Science and Business Media LLC},
+    month = jun,
+    pages = {257–263}
+}
+
+@inproceedings{
+    sharma2013ddec,
+    author = {Sharma, Rahul and Schkufza, Eric and Churchill, Berkeley and Aiken, Alex},
+    title = {Data-driven equivalence checking},
+    year = {2013},
+    isbn = {9781450323741},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    url = {https://doi.org/10.1145/2509136.2509509},
+    doi = {10.1145/2509136.2509509},
+    abstract = {We present a data driven algorithm for equivalence checking of two loops. The algorithm infers simulation relations using data from test runs. Once a candidate simulation relation has been obtained, off-the-shelf SMT solvers are used to check whether the simulation relation actually holds. The algorithm is sound: insufficient data will cause the proof to fail. We demonstrate a prototype implementation, called DDEC, of our algorithm, which is the first sound equivalence checker for loops written in x86 assembly.},
+    booktitle = {Proceedings of the 2013 ACM SIGPLAN International Conference on Object Oriented Programming Systems Languages \& Applications},
+    pages = {391–406},
+    numpages = {16},
+    keywords = {x86, verification, superoptimization, smt, optimization, markov chain monte carlo, compilers, binary analysis},
+    location = {Indianapolis, Indiana, USA},
+    series = {OOPSLA '13}
+}
+
+@inproceedings{
+    torlak2013rosette,
+    author = {Torlak, Emina and Bodik, Rastislav},
+    title = {Growing solver-aided languages with rosette},
+    year = {2013},
+    isbn = {9781450324724},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    url = {https://doi.org/10.1145/2509578.2509586},
+    doi = {10.1145/2509578.2509586},
+    abstract = {SAT and SMT solvers have automated a spectrum of programming tasks, including program synthesis, code checking, bug localization, program repair, and programming with oracles. In principle, we obtain all these benefits by translating the program (once) to a constraint system understood by the solver. In practice, however, compiling a language to logical formulas is a tricky process, complicated by having to map the solution back to the program level and extend the language with new solver-aided constructs, such as symbolic holes used in synthesis. This paper introduces ROSETTE, a framework for designing solver-aided languages. ROSETTE is realized as a solver-aided language embedded in Racket, from which it inherits extensive support for meta-programming. Our framework frees designers from having to compile their languages to constraints: new languages, and their solver-aided constructs, are defined by shallow (library-based) or deep (interpreter-based) embedding in ROSETTE itself.We describe three case studies, by ourselves and others, of using ROSETTE to implement languages and synthesizers for web scraping, spatial programming, and superoptimization of bitvector programs.},
+    booktitle = {Proceedings of the 2013 ACM International Symposium on New Ideas, New Paradigms, and Reflections on Programming \& Software},
+    pages = {135–152},
+    numpages = {18},
+    keywords = {solver-aided languages},
+    location = {Indianapolis, Indiana, USA},
+    series = {Onward! 2013}
+}
