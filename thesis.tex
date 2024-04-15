@@ -17,10 +17,11 @@
 %\usepackage[style=reading,backend=bibtex8]{biblatex} \addbibresource{bibliography.bib}
 \setlength{\parskip}{0pt}
 \newcommand{\red}[1]{\textcolor{red}{#1}}
-\newcommand{\green}[1]{\textcolor{green}{#1}}
+\newcommand{\green}[1]{\textcolor{olive}{#1}}
 \newcommand{\todo}{\red{TODO}}
 
 \newcommand{\comment}[2]{\textbf{#1} \textcolor{blue}{#2}}
+\newcommand{\addressed}[2]{{#1}}
 
 \title{An Overview of Superoptimizers}
 \author{Elijah Wheelock}
@@ -136,7 +137,9 @@ This is potentially very expensive, but if done correctly guarantees the correct
 
 Most interestingly for our purposes, superoptimizers can be categorized by the approach they take to synthesis of superoptimized programs.
 This is the measure on which published systems vary most widely, and the selection of approach is
-    \comment{perhaps}{I've noticed this throughout--you can drop a lot of these qualifiers to make it sound more forceful}
+    \addressed{perhaps}{I've noticed this throughout--you can drop a lot of these qualifiers to make it sound more forceful}
+    % I'm willing to discuss this, but I've used 'perhaps' here intentionally, to signify that this is a qualitative judgement on which reasonable people may disagree
+    % -- I do try not to use qualifiers in technical discussion.
     the most salient question for the authors of new systems.
 These approaches vary widely in sophistication, complexity, and power.
 
@@ -199,8 +202,8 @@ The technique is to line up all possible programs in order of length, testing ea
 \red{TODO} merge into symbolic
 
 \subsubsection{Superoptimizer -- A Look at the Smallest Program}
-Happily, the earliest published superoptimizer is also among the simplest, and so will serve admirably as an introduction to the idea.
-    % \addressed{introduction to the idea}{at some point you should lay out a more complete/formal problem statement. You can use this first paper to do this but then I would talk about it earlier, in the introduction}. 
+Happily, the earliest published superoptimizer is also among the simplest, and so will serve admirably as an
+    \addressed{introduction to the idea}{at some point you should lay out a more complete/formal problem statement. You can use this first paper to do this but then I would talk about it earlier, in the introduction}. 
     % todo added to introduction
 The word "superoptimizer" dates from Henry Massalin's paper, "Superoptimizer -- A Look at the Smallest Program" \cite{massalin1987superoptimizer}.
 Massalin's superoptimizer, like most superoptimizers, operates in three main phases: synthesis, pruning (optional), and verification.
@@ -230,18 +233,24 @@ One clever way to reduce the expense and inconvenience associated with running a
 -- that is, to cache the results of superoptimizing common code segments, and use these results as part of the peephole stage of an ordinary optimizer.
 Such is the strategy adopted by Bansal and Aiken \cite{bansal2006peephole}.
     
-%FIXME
 This system works by harvesting code segments from a large corpus of existing programs, with certain restrictions, and superoptimizing them. 
-In contrast to Massalin's superoptimizer, it uses a
-\comment{runtime-estimate based cost function}{elaborate on this},
+In contrast to Massalin's superoptimizer, it uses a \addressed{runtime-estimate based cost function}{elaborate on this},
 as opposed to length-based.
+\green{
+Rather than simply counting up the number of instructions, it adds up their cycle time, as referenced from the Intel technical manual.
+This gives a better approximation of the true runtime of the code segment.
+}
     
 The selection of code segments is somewhat involved.
 One problem that might occur with superoptimizing a code segment is that it might
-\comment{disturb invariants relied on by other parts of the program}{a small example of this would help clarify}.
+\addressed{disturb invariants relied on by other parts of the program}{a small example of this would help clarify}.
 When the code segment is selected manually, this is not a problem.
 But for automatic selection, the system has to be confident that the segments won't be
-\comment{jumped into from elsewhere}{this could also use an example or more explanation}. 
+\addressed{jumped into from elsewhere}{this could also use an example or more explanation}. 
+\green{
+For example, if the superoptimizer were to work on a code segment containing the start of a loop, but not the end, it would become difficult where the target of the jump at the end of the loop should be, especially if instructions are deleted or reordered.
+Another problem that could occur is that the update of the loop index variable could be lost or moved, in which case the semantics of the overall program are most likely made nonsense.
+}
     
 It also uses a different pruning strategy.
 Before testing an instruction sequence, it is first canonicalized by renaming the registers it uses in a consistent way.
@@ -249,7 +258,8 @@ If the canonicalized form has already been checked, then the sequence may be saf
     
 The verification strategy is similar to Massalin's boolean verifier, but using a SAT solver.
 This approach had become much more practicable in the intervening time between these publications due to
-\comment{algorithmic and hardware advances}{If this isn't stated in the Bansal/Aiken paper then I would find a citation}.
+\addressed{algorithmic and hardware advances}{If this isn't stated in the Bansal/Aiken paper then I would find a citation} 
+\green{-- see e.g. \cite{silva1996grasp}.}
     
 Bansal and Aiken's system achieves quite impressive results 
     -- a speedup by a factor of between 1.7 and 10, (mean ~4.9) in compute-intensive programs, with a 1-5\% speedup in more general programs, all compared to code nominally already optimized by the compiler.
@@ -262,14 +272,21 @@ Bansal and Aiken's system achieves quite impressive results
 \\  \red{TODO}: graph rewriting
 
 \subsubsection{Denali: A Goal-directed Superoptimizer}
-Another work by Joshi et al. \cite{joshi2002denali} uses an automated theorem prover to simultaneously synthesize and verify new programs.
+Another early work on superoptimization, by Joshi et al. \cite{joshi2002denali} uses an automated theorem prover to simultaneously synthesize and verify new programs.
 It takes a program in a custom low-level language, expresses it in a symbolic form as a graph of all equivalent ways of computing its output expressions
-\comment{called the E-graph}{I would be inclined to have a separate description of E-graphs, but it depends on the structure of the section}, and formulates the conjecture that "no program of the target architecture computes the values of the goal terms within K cycles"
-\comment{as an input to a satisfiability solver}{I would reorganize slightly so that this comes right before the explanation below}. 
+    \addressed{called the E-graph}{I would be inclined to have a separate description of E-graphs, but it depends on the structure of the section},
+    % I don't think any of the other papers I'm covering use E-graphs (directly),
+    % so I think it makes sense to define the term closest to its use.
+    %   (I believe this type of E-graph reasoning got merged into SMT solvers,
+    %    so later papers which use SMT solvers get the benefits for free.)
+    and formulates the conjecture that ``no program of the target architecture computes the values of the goal terms within K cycles"
+        \addressed{as an input to a satisfiability solver}{I would reorganize slightly so that this comes right before the explanation below}. 
+        % the explanation of graph re-writing? I think it makes most sense
+        % to introduce graph re-writing here, as well.
     
-The
-\comment{graph re-writing}{introduce graph rewriting}
-uses a fairly standard term-rewriting strategy, with the addition of a notion of equivalence for graph nodes.
+The \addressed{graph re-writing}{introduce graph rewriting}
+uses a fairly standard term-rewriting strategy\footnote{\green{-- that is to say, like a compiler, it has a set of rules by which it re-writes expressions. For each rule, it searches the document for that rule's the left-hand-side, and replaces it with the right-hand-side, and repeats until no more substitutions are possible.}}
+with the addition of a notion of equivalence for graph nodes.
 The connections between the E-graph nodes are then translated into clauses for the use of the SAT solver.
     
 The satisfiability step requires a little more detail.
@@ -292,8 +309,7 @@ This "top-down" approach has the advantage that if the superoptimizer is halted 
 \red{TODO} LLVM phi nodes?
 
 \subsection{CEGIS}
-    
-    \red{TODO}: cite Solar-Lezama et al. "Combinatorial Sketching for Finite Programs"
+    \red{TODO}: cite Solar-Lezama et al. "Combinatorial Sketching for Finite Programs" \cite{solar-lezama2006sketch}
 \\  \red{TODO}: CEGIS, usually goes with some kind of enumeration too
 \\  \red{TODO}: explain CEGIS (briefly-ish) (each counterexample rules out at least one program, so you mostly always make progress, usually quickly).
 
@@ -338,7 +354,7 @@ The forward techniques are
     known bits,
     integer ranges, and
     bivalent bits.
-%\comment{forward techniques}{I would give a higher-level description of the distinction between forward and backward before introducing the specific techniques}
+%\addressed{forward techniques}{I would give a higher-level description of the distinction between forward and backward before introducing the specific techniques}
 The backward techniques are 
     required bits,
     don't-care bits, and
@@ -353,7 +369,7 @@ The bivalent-bits analysis extends known-bit analysis by proving that certain bi
     %\addressed{indeterminate}{Does this mean these bits don't matter? If so I would clarify that}
 while the corresponding bits of the input are known.
     
-The required-bits analysis works by proving that certain bits of the input to the specification are \emph{required}, i.e. that changing its value can change the output.
+The required-bits analysis works by proving that certain bits of the input to the specification are \textit{required}, i.e. that changing its value can change the output.
     If such an input is not used in a candidate program, then that program can be safely pruned;
         e.g. if the specification is $x + y$, but the candidate is $x + C$ where $C$ is constant.
 %FIXME don't-care bits
@@ -373,18 +389,18 @@ The forced-bits analysis is in a way analogous to the known-bits analysis, worki
 \subsubsection{Stochastic Superoptimization}
 Heretofore we have limited ourselves to superoptimizers which operate in a deterministic regime.
 However, there is another way to think of the problem: as an unguided search in a high-dimensional, irregular search space.
-While this way of thinking loses some desirable properties from more deterministic approaches, such as guaranteed progress or "solutions" for small problems, it also unlocks a variety of techniques for use in superoptimization, which may \comment{scale}{I know this is common terminology in a lot of fields, but I would still mention what this means. Maybe give a brief description of the limitations on program length of the symbolic techniques} better than deterministic techniques.
+While this way of thinking loses some desirable properties from more deterministic approaches, such as guaranteed progress or "solutions" for small problems, it also unlocks a variety of techniques for use in superoptimization, which may 
+    %\addressed{scale}{I know this is common terminology in a lot of fields, but I would still mention what this means. Maybe give a brief description of the limitations on program length of the symbolic techniques}
+    become expensive more slowly, relative to input size, than deterministic techniques.
     
 \red{TODO:} Explain MCMC a bit more clearly.
     
-One such technique is markov chain monte carlo sampling, \green{pioneered in this use} by \cite{schkufza2013stoke}. 
-    % \addressed{pioneered}{I'd be careful with the wording--MCMC is considerably older than STOKE, but STOKE was the first to aply it it superoptimization} by \cite{schkufza2013stoke}. 
+One such technique is markov chain monte carlo sampling, \green{pioneered in this use} by \cite{schkufza2013stoke}.
+    % \addressed{pioneered}{I'd be careful with the wording--MCMC is considerably older than STOKE, but STOKE was the first to aply it it superoptimization} by \cite{schkufza2013stoke}.
 Essentially, the strategy works by drawing candidate rewrites from a distribution with \comment{favorable properties}{add some math!} (in this case, a bias toward low cost).
 The candidates are then scored by a cost function taking into account estimates of both \green{correctness} and performance.
     % \addressed{both and}{missing a word, presumably ``correcness''} performance.
 A candidate which scores better than the current best is always accepted; a worse one is accepted with probability proportional to $1/e^(c'/c)$, where $c$ is the cost of the old candidate and $c'$ is the cost of the new one.
-    
-\red{TODO:} 
     
 Correctness is estimated by the hamming distance (bitwise difference: the number of corresponding bits that differ between the two strings, plus insertions, if needed) between the outputs of the candidate and those of the
     \comment{specification}{describe the way test cases are generated}.
@@ -401,8 +417,7 @@ The top 20\% of candidates are then formally verified and tested for performance
 One problem with the kind of bitwise verification accomplished by SMT solvers is that in some sense it's actually too exact.
 This has the disadvantages both of added expense for verifying more than necessary, and in rejecting correct but inexactly equivalent candidate optimizations.
 There are multiple reasons that successful optimizations might not be bitwise equivalent to the specification
-    -- for example, the differences might only appear in a region of input space which is forbidden for
-    \comment{some reason}{add an example}.
+    -- for example, the differences might only appear in a region of input space which is forbidden for \comment{some reason}{add an example}.
 While there are a number of existing efforts to produce relaxation conditions from annotations given by the programmer to a traditional compiler, another possibility is to attempt to have the compiler generate them itself for review by the programmer.
 Such is the project of \cite{sharma2015conditionally}.
     
@@ -411,7 +426,8 @@ It does this by augmenting it with a new verification algorithm, which they call
 This algorithm works using a formal verification system for x86 assembly created by the same authors \cite{sharma2013ddec} (modulo certain pointer aliasing changes) to generate verification conditions for the candidate program, which are then
     \comment{fed into \textsc{Cove}}{the paragraph reads like you're currently describing Cove, so saying the results are fed into Cove is a bit confusing}
     to produce a set of preconditions that make the target and candidate equivalent.
-These preconditions are then presented to the programmer, and if accepted, the candidate program is \comment{considered correct}{my immediate question is whether it's actually easier for a programming to look at preconditions than it is for them to look at generated candidate programs}.
+These preconditions are then presented to the programmer, and if accepted, the candidate program is
+    \comment{considered correct}{my immediate question is whether it's actually easier for a programming to look at preconditions than it is for them to look at generated candidate programs}.
     
 The aliasing changes mentioned above constitute a relaxation of the formal verification process -- it turns out that reasoning about
     \comment{aliasing}{I wouldn't assume people know this term}
@@ -492,8 +508,9 @@ One natural objection to the techniques used in \textsc{Stoke} is that in an opt
 Bunel et al. attempt to apply this insight in \cite{bunel2017learning}.
 They use reinforcement learning to train two different models of the desired policy:
     an unconditional bias for \textsc{Stoke}'s mutation algorithm,
-    and a multi-layer perceptron, which attempts to estimate the best mutations to make based on the instructions already present in the candidate under consideration.
-
+    and a multi-layer perceptron\footnote{a perceptron is a simple neural network which classifies },
+        which attempts to estimate the best mutations to make based on the instructions already present in the candidate under consideration.
+The multilayer perceptron
 
 \subsubsection{Deep Symbolic Superoptimization Without Human Knowledge}
 \cite{hui2020deep}
