@@ -285,9 +285,11 @@ It takes a program in a custom low-level language, expresses it in a symbolic fo
         % to introduce graph re-writing here, as well.
     
 The \addressed{graph re-writing}{introduce graph rewriting}
-uses a fairly standard term-rewriting strategy\footnote{\green{-- that is to say, like a compiler, it has a set of rules by which it re-writes expressions. For each rule, it searches the document for that rule's the left-hand-side, and replaces it with the right-hand-side, and repeats until no more substitutions are possible.}}
+uses a fairly standard term-rewriting strategy\footnotemark
 with the addition of a notion of equivalence for graph nodes.
 The connections between the E-graph nodes are then translated into clauses for the use of the SAT solver.
+
+\footnotetext{\green{-- that is to say, like a compiler, it has a set of rules by which it re-writes expressions. For each rule, it searches the document for that rule's the left-hand-side, and replaces it with the right-hand-side, and repeats until no more substitutions are possible.}}
     
 The satisfiability step requires a little more detail.
 In order to logically express the number of cycles required for the whole program, it has to express the time by which every intermediate step will be completed.
@@ -309,8 +311,8 @@ This "top-down" approach has the advantage that if the superoptimizer is halted 
 \red{TODO} \comment{LLVM phi nodes?}{I probably wouldn't get into phi nodes---they don't make sense unless you also explain a lot more about how compilation works.}
 
 \subsection{CEGIS}
-    \red{TODO}: cite Solar-Lezama et al. "Combinatorial Sketching for Finite Programs" \cite{solar-lezama2006sketch}
-\\  \red{TODO}: CEGIS, usually goes with some kind of enumeration too
+Counter-example guided inductive synthesis (CEGIS) is a program synthesis technique introduced by Solar-Lezama et al. in \cite{solar-lezama2006sketch}.
+Like some of the other techniques we've seen so far, it
 \\  \red{TODO}: explain CEGIS (briefly-ish) (each counterexample rules out at least one program, so you mostly always make progress, usually quickly).
 
 \subsubsection{Souper: A Synthesizing Superoptimizer}
@@ -323,17 +325,19 @@ It has three main components:
     
     \red{TODO}: cite Gulwani et al. "Synthesis of loop-free programs"?
     
-Souper uses a custom IR analogous to a purely-functional subset of LLVM IR without control flow\footnote{Some information about control flow external to the code section under consideration is preserved, but control flow operations within a code section are forbidden.}, represented for computational purposes as a directed acyclic dataflow graph.
+Souper uses a custom IR analogous to a purely-functional subset of LLVM IR without control flow\footnotemark, represented for computational purposes as a directed acyclic dataflow graph.
 It is also limited to integer instructions; it has no model for floating-point, memory, or vector operations.
 The operands of programs in this IR are considered only as bitvectors (parameterized by width) or tuples of bitvectors.
+
+\footnotetext{Some information about control flow external to the code section under consideration is preserved, but control flow operations within a code section are forbidden.}
     
     \red{TODO:} a bit on the synthesizer
     
     \red{TODO}: Threats to soundness:
-        \comment{Souper bugs}{Bugs in the synthesis tool itself are common to all approaches--you can bring it up here since Souper is purportedly more ``production-ready'' than others but I would make it clear that this is not unique to Souper},
-        LLVM bugs,
-        \comment{Solver bugs}{Same as the comment above. I would consider separating these two from the other two, since LLVM bugs and undefined behavior are more unique to Souper},
-        Undefined behavior: One issue with relying on the semantics of LLVM is that there are \comment{areas of undefined behavior}{elaborate}!
+     \\ \comment{Souper bugs}{Bugs in the synthesis tool itself are common to all approaches--you can bring it up here since Souper is purportedly more ``production-ready'' than others but I would make it clear that this is not unique to Souper},
+     \\ LLVM bugs,
+     \\ \comment{Solver bugs}{Same as the comment above. I would consider separating these two from the other two, since LLVM bugs and undefined behavior are more unique to Souper},
+     \\ Undefined behavior: One issue with relying on the semantics of LLVM is that there are \comment{areas of undefined behavior}{elaborate}!
 
 \subsubsection{Dataflow-Based Pruning for Speeding up Superoptimization}
     \red{TODO:} a little bit about why pruning holes early is desirable.
@@ -384,26 +388,28 @@ The forced-bits analysis is in a way analogous to the known-bits analysis, worki
 % \cite{barthe2013simdloopsynth}
 
 \chapter{Stochastic Search}
-\red{TODO:} motivate chapter perhaps with weaknesses of previous approaches.
-    
-\subsubsection{Stochastic Superoptimization}
 Heretofore we have limited ourselves to superoptimizers which operate in a deterministic regime.
 However, there is another way to think of the problem: as an unguided search in a high-dimensional, irregular search space.
-While this way of thinking loses some desirable properties from more deterministic approaches, such as guaranteed progress or "solutions" for small problems, it also unlocks a variety of techniques for use in superoptimization, which may 
+While this way of thinking loses some desirable properties from more deterministic approaches, such as guaranteed progress or canonical ``solutions" for small problems, it also unlocks a variety of techniques for use in superoptimization, which may scale better\footnotemark\, than deterministic techniques.
     %\addressed{scale}{I know this is common terminology in a lot of fields, but I would still mention what this means. Maybe give a brief description of the limitations on program length of the symbolic techniques}
-    become expensive more slowly, relative to input size, than deterministic techniques.
+\footnotetext{In this context, ``scaling better" means that it becomes expensive more slowly, relative to input size. Remember that the space of possible programs grows exponentially with program length, so any optimizer which attempts to explore all of it will take a very long time for even relatively short programs!}
     
-\red{TODO:} Explain MCMC a bit more clearly.
-    
-One such technique is markov chain monte carlo sampling, \green{pioneered in this use} by \cite{schkufza2013stoke}.
+\subsubsection{Stochastic Superoptimization}
+%\red{TODO:} Explain MCMC a bit more clearly.
+\green{Markov chain monte carlo (MCMC) sampling is a technique used to sample from complex possibility spaces, first used for superoptimization} by Schkufza et al. in \cite{schkufza2013stoke}.
     % \addressed{pioneered}{I'd be careful with the wording--MCMC is considerably older than STOKE, but STOKE was the first to aply it it superoptimization} by \cite{schkufza2013stoke}.
-Essentially, the strategy works by drawing candidate rewrites from a distribution with \comment{favorable properties}{add some math!} (in this case, a bias toward low cost).
+Essentially, the strategy works by drawing candidate rewrites from a distribution with 
+    \comment{favorable properties}{add some math!} (in this case, a bias toward low cost).
+    % explain equation 4 -- good candidates have high(er) probability
+\red{TODO:} ask Greg: below is some math. What more?
 The candidates are then scored by a cost function taking into account estimates of both \green{correctness} and performance.
-    % \addressed{both and}{missing a word, presumably ``correcness''} performance.
-A candidate which scores better than the current best is always accepted; a worse one is accepted with probability proportional to $1/e^(c'/c)$, where $c$ is the cost of the old candidate and $c'$ is the cost of the new one.
+A candidate which scores better than the current best is always accepted; a worse one is accepted with probability proportional to $1/e^{(c'/c)}$, where $c$ is the cost of the old candidate and $c'$ is the cost of the new one. 
+\green{This is the Metropolis-Hastings algorithm \cite{metropolis1953montecarlo} \cite{hastings1970mcmc}.}
     
-Correctness is estimated by the hamming distance (bitwise difference: the number of corresponding bits that differ between the two strings, plus insertions, if needed) between the outputs of the candidate and those of the
-    \comment{specification}{describe the way test cases are generated}.
+Correctness is estimated by the hamming distance (bitwise difference: the number of corresponding bits that differ between the two strings, plus insertions, if needed) between the outputs of the candidate and those of the specification 
+\green{on the set of test cases.
+The test cases are generated based on annotations provided by the user; by default, they are uniformly random bitstrings.
+} % \addressed{specification}{describe the way test cases are generated}.
 Cost is estimated by the sum of the (average) latencies of the instructions in the candidate.
     
 There are two phases to the search performed by \textsc{Stoke}:
@@ -447,9 +453,6 @@ The domains used in \textsc{Cove} are bitvector alignment to 1, 2, 4, 8, 16, 32,
 \red{TODO:} a little about results
 
 \subsubsection{Scaling up Superoptimization}
-% cancelled: covered by \cite{phothilimthana2016scaling}
-%\subsubsection{\textsc{GreenThumb:} Superoptimizer Construction Framework}
-%\cite{phothilimthana2016greenthumb} %GreenThumb is a superoptimizer written for 
 
 Perhaps it's a natural question, when comparing the strengths and weaknesses of various superoptimization techniques, to ask, "why not use them all together, and let the strengths of each cover the weaknesses of the others?"
 Phothilimthana et al. attempt precisely this in \cite{phothilimthana2016scaling}.
@@ -497,15 +500,22 @@ The whole-program \textsc{Lens} and SMT synthesizers don't use $p_{best}$. The o
 
 %\subsubsection{Learning Performance-Improving Code Edits} \cite{}
 
-%Reinforcement learning is a machine learning paradigm useful for cases when the structure of a problem is not straightforwardly linked to 
+Reinforcement learning is a machine learning paradigm useful for cases when the structure of a problem is not straightforwardly numeric, but an objective function of the success/failure of an attempted output is available. This function is called the reward/loss function, depending on its sign. In such cases neural networks may be trained by gradient ascent on the reward function or gradient descent on the loss function.
 
-\textsc{REINFORCE}: REward Increment = Non-negative Factor $\times$ Offset Reinforcement $\times$ Characteristic Eligibility
+% REINFORCE: REward Increment = Non-negative Factor $\times$ Offset Reinforcement $\times$ Characteristic Eligibility
 % for RL focus on loss/reward fn
-\cite{sutton1999policygradient}
 
+Due to Sutton et al. in \cite{sutton1999policygradient}, the gradient may be calculated by the following expression:
 \[
-    \frac{\partial \rho}{\partial \theta} = \sum_s d^\pi(s) \sum_a \frac{\partial \pi(s,a)}{\partial \theta}Q^\pi(S,a).
+    \frac{\partial \rho}{\partial \theta} = \sum_s d^\pi(s) \sum_a \frac{\partial \pi(s,a, \theta)}{\partial \theta}Q^\pi(S,a),
 \]
+where $\theta$ is the vector of policy parameters, $\rho(\pi)$ is the (long-term) expected reward from following policy $\pi$, $d^\pi$ is the (stationary) distribution of states expected under $\pi$, and $Q^\pi(s,a)$ is the (immediate) expected reward from a given state-action pair.
+
+This formulation \textit{requires} that $\pi$ be differentiable with respect to $\theta$, i.e. that $\frac{\partial \pi(s,a, \theta)}{\partial \theta}$ exists.
+The reason this formulation is convenient is that there is no term of the form $\frac{\partial d^\pi(s)}{\partial \theta}$, i.e. the effect of policy changes on the distribution of states is irrelevant.
+This allows the gradient to be conveniently estimated by sampling.  % <- ask Greg to please clarify
+
+\comment{}{(My local copy is not quite up to date here so I don't have text to highlight) The $Q$ function measures the \emph{long-term} rewards starting from a given state-action pair, not the immediate reward.}
 
 \comment{}{(My local copy is not quite up to date here so I don't have text to highlight) The $Q$ function measures the \emph{long-term} rewards starting from a given state-action pair, not the immediate reward.}
 
@@ -516,8 +526,10 @@ One natural objection to the techniques used in \textsc{Stoke} is that in an opt
 Bunel et al. attempt to apply this insight in \cite{bunel2017learning}.
 They use reinforcement learning to train two different models of the desired policy:
     an unconditional bias for \textsc{Stoke}'s mutation algorithm,
-    and a multi-layer perceptron\footnote{A perceptron is a simple neural network which classifies its input into predetermined categories.},
+    and a multi-layer perceptron\footnotemark,
         which attempts to estimate the best mutations to make based on the instructions already present in the candidate under consideration.
+    
+\footnotetext{A perceptron is a simple neural network which classifies its input into predetermined categories.}
 
 \subsubsection{Deep Symbolic Superoptimization Without Human Knowledge}
 Another reasonable desire when creating a superoptimization system is to manipulate programs directly via neural networks.
@@ -525,10 +537,12 @@ Hui et al. attempt to do this in \cite{hui2020deep}.
 The goal of this project is to rewrite expression trees to smaller equivalent forms. 
 It uses a three-stage system:
 \begin{itemize}
-    \item an encoder network\footnote{An encoder network maps its input, in this case a tree, to a vector; a decoder naturally does the reverse.}, which produces a vector for each subtree of the input
+    \item an encoder network\footnotemark, which produces a vector for each subtree of the input
     \item a subtree selector, which tries to select promising subtrees to focus on
     \item a decoder/simplifier network, which tries to write an equivalent but smaller expression to the input.
 \end{itemize}
+    
+\footnotetext{An encoder network maps its input, in this case a tree, to a vector; a decoder naturally does the reverse.}
     
 They train the system using the following reward function:
 \[
@@ -537,25 +551,31 @@ They train the system using the following reward function:
             \gamma^{\text{card}(\mathcal{T}_O)} & \text{ if } \mathcal{T}_I \equiv \mathcal{T}_O,
          \\ -\beta\gamma^{\text{card}(\mathcal{T}_O)} & \text{ otherwise}
         \end{cases}
-\]
-where $\mathcal{T}_I$ is the input specification, \comment{$\mathcal{T}_I$}{I assume this is meant to be $\mathcal{T}_O$} is the candidate tree, $\gamma$ and $\beta$ are constants with $0 < \gamma < 1$, and $\text{card}(\mathcal{T})$ is the number of nodes in a tree.
+\] % explain equivalence relation
+where $\mathcal{T}_I$ is the input specification, $\mathcal{T}_O)$ is the candidate tree, $\gamma$ and $\beta$ are constants with $0 < \gamma < 1$, and $\text{card}(\mathcal{T})$ is the number of nodes in a tree.
+%\comment{$\mathcal{T}_I$}{I assume this is meant to be $\mathcal{T}_O$}
 Effectively, this function prioritizes correct output, and between equivalent outputs, prefers shorter ones.
 They use an additional loss function when training the encoder which attempts to force equivalent expressions to have similar encodings, given by
 \[
     L = \frac{1}{|\mathbb{S}|} \sum_{\mathcal{T}_O \in \mathbb{S}} || \boldsymbol{h}(\mathcal{T}_O) - \boldsymbol{h}(\mathcal{T}_I) ||^2_2 \cdot (-1)^{\mathbb{I}[\mathcal{T}_O \not\equiv \mathcal{T}_I]}
 \]
-where $\mathbb{S}$ is a set of outputs generated via the decoder from the same input using beam search\footnote{Beam search is a greedy search algorithm which attempts to pursue the most-promising candidates first.}, $\boldsymbol{h}(\mathcal{T})$ is the embedding of $\mathcal{T}$ generated by the encoder, and $\mathbb{I}$ is the indicator function, which returns 1 when its argument expression is true, and 0 otherwise.
+where $\mathbb{S}$ is a set of outputs generated via the decoder from the same input using beam search\footnotemark, $\boldsymbol{h}(\mathcal{T})$ is the embedding of $\mathcal{T}$ generated by the encoder, and $\mathbb{I}$ is the indicator function, which returns 1 when its argument expression is true, and 0 otherwise.
+    
+\footnotetext{Beam search is a greedy search algorithm which attempts to pursue the most-promising candidates first.}
 
 \subsubsection{Learning to Superoptimize Real-World Programs}
 Another attempt at a similar problem is made by Shypula et al. in \cite{shypula2022learning}.
 With this paper we return to the assembly superoptimization task which has been our focus through most of this document. 
+They use a transformer model\footnotemark in a supervised learning approach which attempts to learn input-output matching for assembly programs, with unoptimized binaries (\texttt{gcc -O0}) being used as the input examples, and optimized binaries (\texttt{gcc -O3}) being used as the outputs.
 
+\footnotetext{Transformers are a sequence-to-sequence machine learning model introduced in 2017 by Vaswani et al. in \cite{vaswani2017attention}, which translate "words" of the input sequence into vectors so that they can be directly manipulated by a neural net; they are distinct from autoencoders in that they have an additional "attention" mechanism, whereby words from a sliding context window are scored for importance before being processed by the main net.}
+    
 The SILO algorithm essentially consists of replacing the outputs from the training set when a better one is found for a given input, then continuing training.
-
+    
 The loss function can be paraphrased as 
 \[ L = P(F_o) \cdot (\text{cost}(F_o) + \lambda \cdot \text{correctness}(F_o) - b(F_I)), \]
-where $P$ is a term representing the probability of generating output function $F_o$, cost($F$) is the sum of the expected latencies for the instructions in $F_o$ (the same cost function as \textsc{Stoke}) plus the sum of the expected latencies of the instructions executed by $F_o$ on the test suite, correctness($F$) is 0 if $F$ is equivalent to $F_I$ and 1 otherwise, $\lambda$ is a tuneable penalty for incorrectness (they set it to 50000), and $b(F_I)$ is a baseline cost for the input function.
-
+where $P$ is a term representing the probability of generating output function $F_o$, cost($F$) is the sum of the expected latencies for the instructions in $F_o$ (the same cost function as \textsc{Stoke}) plus the sum of the expected latencies of the instructions actually executed by $F_o$ on the test suite, correctness($F$) is 0 if $F$ is equivalent to $F_I$ and 1 otherwise, $\lambda$ is a tuneable penalty for incorrectness (they set it to 50000), and $b(F_I)$ is a baseline cost for the input function.
+    
 % some supervised, input/output pair
 % trained wrt policy gradient RLish thingy
 % don't need to explain transformers in detail
