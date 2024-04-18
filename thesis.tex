@@ -515,6 +515,8 @@ This formulation \textit{requires} that $\pi$ be differentiable with respect to 
 The reason this formulation is convenient is that there is no term of the form $\frac{\partial d^\pi(s)}{\partial \theta}$, i.e. the effect of policy changes on the distribution of states is irrelevant.
 This allows the gradient to be conveniently estimated by sampling.  % <- ask Greg to please clarify
 
+\comment{}{(My local copy is not quite up to date here so I don't have text to highlight) The $Q$ function measures the \emph{long-term} rewards starting from a given state-action pair, not the immediate reward.}
+
 \subsubsection{Learning to Superoptimize Programs}
 % Augment \textsc{Stoke} by using reinforcement learning to improve the distribution of proposed mutations.
 % two different techniques: learning bias and multilayer perceptron
@@ -548,7 +550,8 @@ They train the system using the following reward function:
          \\ -\beta\gamma^{\text{card}(\mathcal{T}_O)} & \text{ otherwise}
         \end{cases}
 \] % explain equivalence relation
-where $\mathcal{T}_I$ is the input specification, $\mathcal{T}_I$ is the candidate tree, $\gamma$ and $\beta$ are constants with $0 < \gamma < 1$, and $\text{card}(\mathcal{T})$ is the number of nodes in a tree.
+where $\mathcal{T}_I$ is the input specification, $\mathcal{T}_O)$ is the candidate tree, $\gamma$ and $\beta$ are constants with $0 < \gamma < 1$, and $\text{card}(\mathcal{T})$ is the number of nodes in a tree.
+%\comment{$\mathcal{T}_I$}{I assume this is meant to be $\mathcal{T}_O$}
 Effectively, this function prioritizes correct output, and between equivalent outputs, prefers shorter ones.
 They use an additional loss function when training the encoder which attempts to force equivalent expressions to have similar encodings, given by
 \[
