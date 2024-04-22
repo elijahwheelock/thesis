@@ -19,7 +19,6 @@
 \newcommand{\red}[1]{\textcolor{red}{#1}}
 \newcommand{\green}[1]{\textcolor{olive}{#1}}
 \newcommand{\todo}{\red{TODO}}
-
 \newcommand{\comment}[2]{\textbf{#1} \textcolor{blue}{#2}}
 \newcommand{\addressed}[2]{{#1}}
 
@@ -29,9 +28,7 @@
 \division{Mathematics and Natural Sciences}
 \advisor{Greg Anderson}
 \department{Computer Science}
-
 \begin{document}
-
 \maketitle
 \frontmatter % this stuff will be roman-numbered
 \pagestyle{empty} % this removes page numbers from the frontmatter
@@ -123,6 +120,7 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
         Therefore most superoptimization systems are limited mainly by available computation power, and impose a maximum synthesized program size for performance reasons.
     
     \red{TODO} talk about difficulties synthesizing constants, memory access, %TODO 
+    \red{TODO} talk about guaranteed progress, timeouts, etc.
     
     There are also multiple approaches for verification of synthesized programs.
     Perhaps the simplest is heuristic testing: 
@@ -159,42 +157,45 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
             The reliable, but slow and expensive way, is to logically test the bitwise equivalency of the candidate program to the desired program, using what Massalin calls a "boolean program verifier".
             As we'll see soon, this approach has become much more practical in the years since then, due to improvements both in hardware and SMT solvers. 
                 
-            This system, although relatively simple, and harshly limited by the available computation hardware of its era, achieves some interesting results --
-                
-            \red{TODO:} add results %FIXME
+            \green{
+            This system, although relatively simple, and harshly limited by the available computation hardware of its era, achieves some qualitatively interesting results -- for example, Massalin uses it to search for efficient instruction sequences to divide by constants, but fails to find any.
+            Since the superoptimizer performs an exhaustive search, this constitutes a proof that there are no such sequences. (Presumably these constants were not powers of two, division by which can be accomplished by a right shift.)
+            }
 
         \subsubsection{Automatic Generation of Peephole Superoptimizers}
             One clever way to reduce the expense and inconvenience associated with running a superoptimizer to improve your code is to precompute it
             -- that is, to cache the results of superoptimizing common code segments, and use these results as part of the peephole stage of an ordinary optimizer.
             Such is the strategy adopted by Bansal and Aiken \cite{bansal2006peephole}.
-                
+            
             This system works by harvesting code segments from a large corpus of existing programs, with certain restrictions, and superoptimizing them. 
             In contrast to Massalin's superoptimizer, it uses a runtime-estimate based cost function, as opposed to length-based.
             Rather than simply counting up the number of instructions, it adds up their cycle times, as referenced from the Intel technical manual.
             This gives a better approximation of the true runtime of the code segment.
-                
+            
             The selection of code segments is somewhat involved.
             One problem that might occur with superoptimizing a code segment is that it might disturb invariants relied on by other parts of the program.
             When the code segment is selected manually, this is not a problem.
             But for automatic selection, the system has to be confident that the segments won't be jumped into from elsewhere.
             For example, if the superoptimizer were to work on a code segment containing the start of a loop, but not the end, it would become difficult where the target of the jump at the end of the loop should be, especially if instructions are deleted or reordered.
             Another problem that could occur is that the update of the loop index variable could be lost or moved, in which case the semantics of the overall program are most likely made nonsense.
-                
+            
             It also uses a different pruning strategy.
             Before testing an instruction sequence, it is first canonicalized by renaming the registers it uses in a consistent way.
             If the canonicalized form has already been checked, then the sequence may be safely pruned.
-                
+            
             The verification strategy is similar to Massalin's boolean verifier, but using a SAT solver.
             This approach had become much more practicable in the intervening time between these publications due to algorithmic and hardware advances -- see e.g. \cite{silva1996grasp}.
-                
-            Bansal and Aiken's system achieves quite impressive results 
-                -- a speedup by a factor of between 1.7 and 10, (mean ~4.9) in compute-intensive programs, with a 1-5\% speedup in more general programs, all compared to code nominally already optimized by the compiler.
+            
+            \green{ % this is not actually newly-written, but I'm highlighting it to go along with the other new results sections
+            Bansal and Aiken's system achieves quite impressive results -- a speedup by a factor of between 1.7 and 10, (mean ~4.9) in compute-intensive programs, with a 1-5\% speedup in more general programs, all compared to code already nominally optimized by the compiler.
+            }
 
     \subsection{SMT}
         \red{TODO}: add background, SAT solver
     \\  \red{TODO}: graph rewriting
-
+        
         \subsubsection{Denali: A Goal-directed Superoptimizer}
+            \red{TODO:} mapping of E-graph to SAT clause
             Another early work on superoptimization, by Joshi et al. \cite{joshi2002denali} uses an automated theorem prover to simultaneously synthesize and verify new programs.
             It takes a program in a custom low-level language, expresses it in a symbolic form as a graph of all equivalent ways of computing its output expressions
                 \addressed{called the E-graph}{I would be inclined to have a separate description of E-graphs, but it depends on the structure of the section},
@@ -220,19 +221,27 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
                 \item Only one operation may be launched per cycle (The paper gives some remarks on extending to multiprocessing systems, but does not explain in detail).
             \end{itemize}
                 
-            \red{TODO:} mapping of E-graph to SAT clause
+            \green{
+            The results section in this paper is not extensive, but they report that Denali was able to meet or exceed the performance of an aggressively-optimizing C compiler on certain problems.
+            }
 
         \subsubsection{Unbounded Superoptimization}
-            Related to Denali is the work by Jangda and Yorsh in "Unbounded Superoptimization" \cite{jangda2017unbounded}.
+            A more modern take on a similar approach to Denali is the work by Jangda and Yorsh in "Unbounded Superoptimization" \cite{jangda2017unbounded}.
             Rather than matching E-graphs, which in the intervening years had been integrated into SMT solvers, it to directly encodes the target program as a logical formula.
             It does this by encoding the input program, treating it as the first candidate output, and
                 \comment{"squeezing" it by imposing lower and lower cost bounds on the solver}{I would make this a bit more explicit--how exactly are computational bounds encoded and how does the tool decide what bounds to use?}.
             This "top-down" approach has the advantage that if the superoptimizer is halted early, it can still return a correct output, unlike many superoptimizers which work "bottom-up" and thus start without any candidate programs.
-                
-            \subsection{CEGIS}
-            Counter-example guided inductive synthesis (CEGIS) is a program synthesis technique introduced by Solar-Lezama et al. in \cite{solar-lezama2006sketch}.
-            Like some of the other techniques we've seen so far, it
-            \\  \red{TODO}: explain CEGIS (briefly-ish) (each counterexample rules out at least one program, so you mostly always make progress, usually quickly).
+
+            \green{
+            Jangda and Yorsh tested their technique on a set of problems from Hacker's Delight \cite{warren2013hackers}.
+            They successfully generated optimal code for 17 of 25 problems, and failed for 8.
+            Comparing the output of their technique to the outputs of \texttt{gcc -O3}, they found that for 3 of the problems the code generated by their tool was about 20\% faster than (and algorithmically distinct from) the output of \texttt{gcc -O3}; on the other 14 problems the performance was identical to that of \texttt{gcc -O3}.
+            }
+
+    \subsection{CEGIS}
+        Counter-example guided inductive synthesis (CEGIS) is a program synthesis technique introduced by Solar-Lezama et al. in \cite{solar-lezama2006sketch}.
+        Like some of the other techniques we've seen so far, it
+        \\  \red{TODO}: explain CEGIS (briefly-ish) (each counterexample rules out at least one program, so you mostly always make progress, usually quickly).
 
         \subsubsection{Souper: A Synthesizing Superoptimizer}
             Souper \cite{sasnauskas2017souper} is an engineering project to create a superoptimizer working on LLVM IR.
@@ -241,15 +250,15 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
                 an extractor, to produce Souper IR from LLVM IR,
                 a synthesizer using counterexample-guided interactive synthesis,
                 and a verifier using an SMT solver.
-                
+            
             \red{TODO}: cite Gulwani et al. "Synthesis of loop-free programs"?
-                
+            
             Souper uses a custom IR analogous to a purely-functional subset of LLVM IR without control flow\footnotemark, represented for computational purposes as a directed acyclic dataflow graph.
             It is also limited to integer instructions; it has no model for floating-point, memory, or vector operations.
             The operands of programs in this IR are considered only as bitvectors (parameterized by width) or tuples of bitvectors.
-                
-            \footnotetext{Some information about control flow external to the code section under consideration is preserved, but control flow operations within a code section are forbidden.}
-                
+            
+            \footnotetext{Some information about control flow external to the code segment under consideration is preserved, but control flow operations within a code segment are forbidden.}
+            
             \red{TODO:} a bit on the synthesizer
             
             \red{TODO}: Threats to soundness:
@@ -264,15 +273,15 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
             This paper uses both \textit{forward} and \textit{backward} dataflow analysis techniques to prove candidate expressions incorrect before they are fully substantiated (while they still contain "holes", constants or sub-expressions which have yet to be synthesized).
             Mukherjee et al. define forward techniques as those which work by drawing a chain of reasoning from properties of the specification program's output into properties which must hold for a correct candidate program.
             By contrast, backward techniques draw inferences from the program's inputs into the candidate.
-                
+            
             The forward techniques are known/bivalent bits and integer ranges.
             The backward techniques are required bits/don't-care bits and forced bits.
-                
+            
             The known-bits analysis works by proving that certain bits of the output of the candidate program are necessarily incompatible with the specification.
                 For a simple example, if the specification ends by setting the rightmost bit of the output to 1, then any candidate which ends with a left shift can be immediately dismissed.
             The integer ranges analysis works by proving that there is some output of the specification that is outside the range of the candidate.
                 For example, if we know that for the specification $f(x) = -1$ for some $x$, we can prune the candidate $g(x) = abs(x)$.
-                
+            
             The required-bits analysis works by proving that certain bits of the input to the specification are \textit{required}, i.e. that changing its value (with other bits constant) necessarily changes the output.
                 If such an input is not used in a candidate program (is a don't-care bit), then that program can be safely pruned.
                     For example, if the specification is $x + y$, but the candidate is $x + C$ where $C$ is constant, the candidate may be pruned.
@@ -280,9 +289,17 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
                 It works by finding conflicts in candidates with symbolic (not-yet-synthesized) constants.
                 Intuitively, it can be thought of as finding inconsistencies in a system of equations based on comparing the candidate to the specification.
                 For example, suppose the specification is $f(x) = x^2 + 1$, and the candidate is $g(x) = x + C$. In that case, $f(3) = 10$, and $f(1) = 2$. Then we need $C$ such that $f(3) = g(3) = 10 = 3 + C$, and $f(1) = g(1) = 2 = 1 + C$, so we must have $1 = C = 7$. This is unsatisfiable, so we can dismiss $g$ without attempting to learn anything more about it.
-                
-            \red{TODO:} Something about results
-                
+            
+            \green{
+            Results: Mukherjee et al. tested the performance of Souper on 269,113 C/C++ programs from SPEC CPU 2017\footnote{https://www.spec.org/cpu2017/}, with and without the addition of their dataflow pruning techniques.
+            The compiled outputs from LLVM served as the specifications for Souper.
+            They considered a synthesis attempt a success only when it found a candidate with lower cost than the specification;
+            they declared it a failure if it took too much time (300 seconds) or memory (4GB).
+            They found that their pruning made Souper's synthesis 2.32x faster, and increased the number of successful syntheses finished before timeout by 8\%.
+            Their pruning procedure took less than 3\% of the overall runtime of the synthesis attempts in which it was used.
+            They found that pruning made synthesis faster for 87\% of problems; it was slower mainly for very large problems with hundreds of instructions.
+            }
+
         %Present CEGIS first, then decide if this is still in
         % \subsubsection{From Relational Verification to SIMD Loop Synthesis}
         % \cite{barthe2013simdloopsynth}
@@ -298,7 +315,7 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
         Markov chain monte carlo (MCMC) sampling is a technique used to sample from complex possibility spaces, first used for superoptimization by Schkufza et al. in \cite{schkufza2013stoke}.
         Essentially, the strategy works by drawing candidate rewrites from a distribution with \comment{favorable properties}{add some math!} (in this case, a bias toward low cost). % explain equation 4 -- cheap candidates have higher probability
         \[
-            p(\mathcal{R;T}) = \frac{1}{Z} \mathrm{ exp}\left(-\beta \cdot c(\mathcal{R;T})\right)
+            p(\mathcal{R;T}) = \frac{1}{Z} \mathrm{exp}\left(-\beta \cdot c(\mathcal{R;T})\right)
         \]
         The candidates are then scored by a cost function taking into account estimates of both correctness and performance.
         A candidate which scores better than the current best is always accepted; a worse one is accepted with probability proportional to $1/e^{(c'/c)}$, where $c$ is the cost of the old candidate and $c'$ is the cost of the new one. 
@@ -313,7 +330,12 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
             and optimization, in which correct programs are permuted in search of better performance.
         The top 20\% of candidates are then formally verified and tested for performance, and the best candidate is returned.
             
-            \red{TODO}: Results and limitations
+        \green{
+        Schkufza et al. test \textsc{Stoke} against 25 problems from Hacker's Delight \cite{warren2013hackers}, and 3 additional problems. 
+        Beginning with the output of \texttt{llvm -O0}, it produced output which generally matched and in a few cases significantly exceeded that of \texttt{gcc -O3}.
+        For 7 of 28 problems, it discovered programs which were algorithmically distinct from the input specification.
+        For 3 of the problems, the synthesis step timed out, meaning that it was unable to derive an equivalent program \textit{de novo}; however, the optimization step was still able to discover a rewrite with good performance.
+        }
 
     \subsubsection{Conditionally Correct Superoptimization}
         One problem with the kind of bitwise verification accomplished by SMT solvers is that in some sense it's actually too exact.
@@ -342,11 +364,14 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
             by conjoining abstractions of the test inputs on which the target and candidate are equivalent in progressively more-restrictive abstract domains.
         The domains used in \textsc{Cove} are bitvector alignment to 1, 2, 4, 8, 16, 32, and 64 bytes, bit-vector equalities, and bit-vector intervals (interpreted as intervals of unsigned integers).
             
-        \red{TODO:} ask Greg about what exactly the \comment{abstraction function is doing}{the abstraction function lifts a set of concrete values to the abstract domain--if you think of the abstract domain as some \emph{structured} set of inputs, then the abstract function enforces that structure while preserving overapproximation. The concretization function is the opposite--it ``forgets'' the structure of the abstract domain.}
+        % \red{TO DO:} ask Greg about what exactly the \comment{abstraction function is doing}{the abstraction function lifts a set of concrete values to the abstract domain--if you think of the abstract domain as some \emph{structured} set of inputs, then the abstract function enforces that structure while preserving overapproximation. The concretization function is the opposite--it ``forgets'' the structure of the abstract domain.}
             
         \red{TODO:} a little background on abstract interpretation
             
-        \red{TODO:} a little about results
+        \green{
+        Results: 
+        }
+
 
     \subsubsection{Scaling up Superoptimization}
         Perhaps it's a natural question, when comparing the strengths and weaknesses of various superoptimization techniques, to ask, "why not use them all together, and let the strengths of each cover the weaknesses of the others?"
@@ -383,10 +408,15 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
         \end{itemize}
         The communication between synthesizers takes the form of a shared best solution, $p_{best}$.
         The whole-program \textsc{Lens} and SMT synthesizers don't use $p_{best}$. The others restart their synthesis, using $p_{best}$ as the new starting point instead of the target.
-
+        
         \red{TODO:} results
-
-        \includegraphics[scale=0.5]{scaling}
+        
+        \begin{figure}
+            \centering
+            \textbf{Your title}\par\medskip
+            \includegraphics[scale=0.5]{scaling}
+            \caption{Your caption}
+        \end{figure}
 
     % on backburner
     %\subsubsection{Sound Loop Superoptimization for Google Native Client}
@@ -412,70 +442,87 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
     %\subsubsection{Learning Performance-Improving Code Edits} \cite{}
 
     \subsubsection{Learning to Superoptimize Programs}
-    % Augment \textsc{Stoke} by using reinforcement learning to improve the distribution of proposed mutations.
-    % two different techniques: learning bias and multilayer perceptron
-    One natural objection to the techniques used in \textsc{Stoke} is that in an optimal program, some instructions are more likely than others.
-    Bunel et al. attempt to apply this insight in \cite{bunel2017learning}.
-    They use reinforcement learning to train two different models of the desired policy:
-        an unconditional bias for \textsc{Stoke}'s mutation algorithm,
-        and a multi-layer perceptron\footnotemark,
-            which attempts to estimate the best mutations to make based on the instructions already present in the candidate under consideration.
+        % Augment \textsc{Stoke} by using reinforcement learning to improve the distribution of proposed mutations.
+        % two different techniques: learning bias and multilayer perceptron
+        One natural objection to the techniques used in \textsc{Stoke} is that in an optimal program, some instructions are more likely than others.
+        Bunel et al. attempt to apply this insight in \cite{bunel2017learning}.
+        They use reinforcement learning to train two different models of the desired policy:
+            an unconditional bias for \textsc{Stoke}'s mutation algorithm,
+            and a multi-layer perceptron\footnotemark,
+                which attempts to estimate the best mutations to make based on the instructions already present in the candidate under consideration.
+        \footnotetext{A perceptron is a simple neural network which classifies its input into predetermined categories.}
         
-    \footnotetext{A perceptron is a simple neural network which classifies its input into predetermined categories.}
+        \green{
+        They train the systems using the expected cost of the output of the system, which can be paraphrased as the following loss function:
+        \[
+            \mathcal{L}(\theta) = \mathbb{E}_{\{\mathcal{R}\sim q_\theta}[r\{\mathcal{R}\}],
+        \]
+        where $q_\theta$ is the policy distribution, $r$ is the cost estimator for a rewrite, and $\{\mathcal{R}\}$ is a set of rewrites sampled from the policy distribution.
+        }
+        
+        \green{
+        Bunel et al. compare their biased version of \textsc{Stoke} with the original and with an unoptimized reference implementation.
+        They find that the biased version significantly outperforms the original.
+        On the Hacker's Delight problems, \textsc{Stoke} found programs with on average 53\% of the cost of the unoptimized implementation, while the biased version found programs with 32\% of the cost.
+        On a set of random programs, \textsc{Stoke}'s average cost was 78\% of the unoptimized cost, while the biased version's average cost was 63.56%.
+        The multi-layer perceptron achieved very slightly higher performance than the bias, improving on it by about 1\%.
+        }
 
     \subsubsection{Deep Symbolic Superoptimization Without Human Knowledge}
-    Another reasonable desire when creating a superoptimization system is to manipulate programs directly via neural networks.
-    Hui et al. attempt to do this in \cite{hui2020deep}. 
-    The goal of this project is to rewrite expression trees to smaller equivalent forms. 
-    It uses a three-stage system:
-    \begin{itemize}
-        \item an encoder network\footnotemark, which produces a vector for each subtree of the input
-        \item a subtree selector, which tries to select promising subtrees to focus on
-        \item a decoder/simplifier network, which tries to write an equivalent but smaller expression to the input.
-    \end{itemize}
-        
-    \footnotetext{An encoder network maps its input, in this case a tree, to a vector; a decoder naturally does the reverse.}
-        
-    They train the system using the following reward function:
-    \[
-        R(\mathcal{T}_I,\mathcal{T}_O) =
-            \begin{cases}
-                \gamma^{\text{card}(\mathcal{T}_O)} & \text{ if } \mathcal{T}_I \equiv \mathcal{T}_O,
-            \\ -\beta\gamma^{\text{card}(\mathcal{T}_O)} & \text{ otherwise}
-            \end{cases}
-    \] % explain equivalence relation
-    where $\mathcal{T}_I$ is the input specification, $\mathcal{T}_O)$ is the candidate tree, $\gamma$ and $\beta$ are constants with $0 < \gamma < 1$, and $\text{card}(\mathcal{T})$ is the number of nodes in a tree.
-    Effectively, this function prioritizes correct output, and between equivalent outputs, prefers shorter ones.
-    They use an additional loss function when training the encoder which attempts to force equivalent expressions to have similar encodings, given by
-    \[
-        L = \frac{1}{|\mathbb{S}|} \sum_{\mathcal{T}_O \in \mathbb{S}} || \boldsymbol{h}(\mathcal{T}_O) - \boldsymbol{h}(\mathcal{T}_I) ||^2_2 \cdot (-1)^{\mathbb{I}[\mathcal{T}_O \not\equiv \mathcal{T}_I]}
-    \]
-    where $\mathbb{S}$ is a set of outputs generated via the decoder from the same input using beam search\footnotemark, $\boldsymbol{h}(\mathcal{T})$ is the embedding of $\mathcal{T}$ generated by the encoder, and $\mathbb{I}$ is the indicator function, which returns 1 when its argument expression is true, and 0 otherwise.
-        
-    \footnotetext{Beam search is a greedy search algorithm which attempts to pursue the most-promising candidates first. It discards less-promising candidates, thereby trading guaranteed completion for memory efficiency.}
+        Another reasonable desire when creating a superoptimization system is to manipulate programs directly via neural networks.
+        Hui et al. attempt to do this in \cite{hui2020deep}. 
+        The goal of this project is to rewrite expression trees to smaller equivalent forms. 
+        It uses a three-stage system:
+        \begin{itemize}
+            \item an encoder network\footnotemark, which produces a vector for each subtree of the input
+            \item a subtree selector, which tries to select promising subtrees to focus on
+            \item a decoder/simplifier network, which tries to write an equivalent but smaller expression to the input.
+        \end{itemize}
+            
+        \footnotetext{An encoder network maps its input, in this case a tree, to a vector; a decoder naturally does the reverse.}
+            
+        They train the system using the following reward function:
+        \[
+            R(\mathcal{T}_I,\mathcal{T}_O) =
+                \begin{cases}
+                    \gamma^{\text{card}(\mathcal{T}_O)} & \text{ if } \mathcal{T}_I \equiv \mathcal{T}_O,
+                \\ -\beta\gamma^{\text{card}(\mathcal{T}_O)} & \text{ otherwise}
+                \end{cases}
+        \] % explain equivalence relation
+        where $\mathcal{T}_I$ is the input specification, $\mathcal{T}_O)$ is the candidate tree, $\gamma$ and $\beta$ are constants with $0 < \gamma < 1$, and $\text{card}(\mathcal{T})$ is the number of nodes in a tree.
+        Effectively, this function prioritizes correct output, and between equivalent outputs, prefers shorter ones.
+        They use an additional loss function when training the encoder which attempts to force equivalent expressions to have similar encodings, given by
+        \[
+            L = \frac{1}{|\mathbb{S}|} \sum_{\mathcal{T}_O \in \mathbb{S}} || \boldsymbol{h}(\mathcal{T}_O) - \boldsymbol{h}(\mathcal{T}_I) ||^2_2 \cdot (-1)^{\mathbb{I}[\mathcal{T}_O \not\equiv \mathcal{T}_I]}
+        \]
+        where $\mathbb{S}$ is a set of outputs generated via the decoder from the same input using beam search\footnotemark, $\boldsymbol{h}(\mathcal{T})$ is the embedding of $\mathcal{T}$ generated by the encoder, and $\mathbb{I}$ is the indicator function, which returns 1 when its argument expression is true, and 0 otherwise.
+            
+        \footnotetext{Beam search is a greedy search algorithm which attempts to pursue the most-promising candidates first. It discards less-promising candidates, thereby trading guaranteed completion for memory efficiency.}
 
     \subsubsection{Learning to Superoptimize Real-World Programs}
-    Another attempt at a similar problem is made by Shypula et al. in \cite{shypula2022learning}.
-    With this paper we return to the assembly superoptimization task which has been our focus through most of this document. 
-    They use a transformer model\footnotemark in a supervised learning approach which attempts to learn input-output matching for assembly programs, with unoptimized binaries (\texttt{gcc -O0}) being used as the input examples, and optimized binaries (\texttt{gcc -O3}) being used as the outputs.
-
-    \footnotetext{Transformers are a sequence-to-sequence machine learning model introduced in 2017 by Vaswani et al. in \cite{vaswani2017attention}, which translate "words" of the input sequence into vectors so that they can be directly manipulated by a neural net; they are distinct from autoencoders in that they have an additional "attention" mechanism, whereby words from a sliding context window are scored for importance before being processed by the main net.}
+        Another attempt at a similar problem is made by Shypula et al. in \cite{shypula2022learning}.
+        With this paper we return to the assembly superoptimization task which has been our focus through most of this document. 
+        They use a transformer model\footnotemark in a supervised learning approach which attempts to learn input-output matching for assembly programs, with unoptimized binaries (\texttt{gcc -O0}) being used as the input examples, and optimized binaries (\texttt{gcc -O3}) being used as the outputs.
         
-    The SILO algorithm essentially consists of replacing the outputs from the training set when a better one is found for a given input, then continuing training.
+        \footnotetext{Transformers are a sequence-to-sequence machine learning model introduced in 2017 by Vaswani et al. in \cite{vaswani2017attention}, which translate "words" of the input sequence into vectors so that they can be directly manipulated by a neural net; they are distinct from autoencoders in that they have an additional "attention" mechanism, whereby words from a sliding context window are scored for importance before being processed by the main net.}
+            
+        The SILO algorithm essentially consists of replacing the outputs from the training set when a better one is found for a given input, then continuing training.
+            
+        The loss function can be paraphrased as 
+        \[ L = P(F_o) \cdot (\text{cost}(F_o) + \lambda \cdot \text{correctness}(F_o) - b(F_I)), \]
+        where $P$ is a term representing the probability of generating output function $F_o$, cost($F$) is the sum of the expected latencies for the instructions in $F_o$ (the same cost function as \textsc{Stoke}) plus the sum of the expected latencies of the instructions actually executed by $F_o$ on the test suite, correctness($F$) is 0 if $F$ is equivalent to $F_I$ and 1 otherwise, $\lambda$ is a tuneable penalty for incorrectness (they set it to 50000), and $b(F_I)$ is a baseline cost for the input function.
         
-    The loss function can be paraphrased as 
-    \[ L = P(F_o) \cdot (\text{cost}(F_o) + \lambda \cdot \text{correctness}(F_o) - b(F_I)), \]
-    where $P$ is a term representing the probability of generating output function $F_o$, cost($F$) is the sum of the expected latencies for the instructions in $F_o$ (the same cost function as \textsc{Stoke}) plus the sum of the expected latencies of the instructions actually executed by $F_o$ on the test suite, correctness($F$) is 0 if $F$ is equivalent to $F_I$ and 1 otherwise, $\lambda$ is a tuneable penalty for incorrectness (they set it to 50000), and $b(F_I)$ is a baseline cost for the input function.
-        
-    % some supervised, input/output pair
-    % trained wrt policy gradient RLish thingy
-    % don't need to explain transformers in detail
+        \green{
+        They test the SILO system against REINFORCE alone, and find that SILO improves on \texttt{gcc -O3} on 8.9\% of their test set, as opposed to 0.9\% for REINFORCE.
+        They found that REINFORCE consistently made improvements only on the same few problems from the test set, while SILO improved its performance with training.
+        }
 
 \chapter{Conclusion}
 \red{TODO:} future work?, comparison of techniques, 
 % to make it passable, fill out todos
 % work on transitions around chapters -- introduction and conclusion for each, make sure the background information sets up the reader to understand what comes after
 % to make it pretty decent,
+
     % do some synthesis of the "overall story" of superoptimization
     % within each chapter put a bit of a conclusion for the chapter
 % for even better, add more background and more papers, and ideally implementations
