@@ -39,13 +39,13 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
 
 \chapter*{Abstract} % If your abstract is longer than a page, there may be a formatting issue.
     Superoptimization is a family of compilation techniques which seek to improve the characteristics of computer programs by computational means.
-    This is seen as distinct from "ordinary" optimization (perhaps more properly called meliorization), which seeks to improve programs by application of a large number of rewrite rules.
+    This is seen as distinct from ``traditional" optimization (perhaps more properly called meliorization), which seeks to improve programs by application of a large number of rewrite rules.
     Another view is that superoptimization recharacterizes the problem of program improvement as a search problem, rather than an equational reasoning problem.
     This is desirable because it allows the use of a wide variety of techniques from the literature on unguided search problems.
     More broadly, superoptimization may be seen as an application of the techniques of program synthesis to the domain of concretely-realized (assembly code/IR) programs.
     In practice, there is an infinite number of potential programs which compute the desired result, many of which are not intuitively obvious.
     Therefore it is desirable to have special techniques for synthesizing (generating), pruning, and verifying such candidate programs. 
-    In this paper, we will survey a variety of methods from the literature that have been used for these ends.
+    In this paper, we will survey a variety of methods from the literature which have been used for these ends.
 
 \mainmatter % here the regular arabic numbering starts
 \pagestyle{fancyplain} % turns page numbering back on
@@ -56,12 +56,13 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
     \singlespacing % \onehalfspacing % \doublespacing
     
         \red{TODO:} Reiterate abstract in introduction
-     \\ \red{TODO:} add a bit more introduction about what program optimization is and how and why it is done classically
-     \\ \red{TODO:} lay out a complete formal problem statement. 
-     \\ \red{TODO:} cite some stuff, e.g. Turing on undecidability. probably anything a CS senior wouldn't know should be cited
-     \\ \red{TODO:} introduce the general framework of synthesis/verification/pruning explicitly
-     \\ \red{TODO:} talk about difficulties synthesizing constants, memory access
+    %\\ \red{TODO:} add a bit more introduction about what program optimization is and how and why it is done classically
+    %\\ \red{TODO:} lay out a complete formal problem statement. 
+    %\\ \red{TODO:} cite some stuff, e.g. Turing on undecidability. probably anything a CS senior wouldn't know should be cited
+    %\\ \red{TODO:} introduce the general framework of synthesis/verification/pruning explicitly
+    %\\ \red{TODO:} talk about difficulties synthesizing constants, memory access
      \\ \red{TODO:} talk about guaranteed progress, timeouts, etc.
+     \\ \red{TODO:} keep reorganizing
     
     One way to look at the history of life is as a long climb towards greater intelligence.
     One way to look at intelligence is as a tool for the performance of computations.
@@ -71,12 +72,19 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
     Removing our tongues from our cheeks, we still are left with the desire to improve our programs. 
     Traditional approaches in this field generally do so by means of an optimizing compiler, which rewrite programs using a large number of essentially find-and-replace transformation rules.
     There is currently a wide variety of approaches to this problem in the literature, ranging from tools for the education of programmers, to formal machine reasoning software, to multi-million-dollar so-called ``AI" systems.
-    In an attempt to keep things relatively concrete, for the purposes of this thesis, we have chosen to focus mainly on one type of program: sequences of machine code (assembly), and one way of improving them: unguided search.
+    In an attempt to keep things relatively concrete, for the purposes of this thesis, we have chosen to focus mainly on one type of program: sequences of assembly/machine code, and one way of improving them: unguided search.
     
     \green{
-    A traditional compiler\footnotemark generally has (roughly) three main stages, commonly called the frontend, the middle-end, and the backend.
+    Our formal problem statement is the following: given a specification program in a formal language $L$, produce an equivalent program in $L$ which scores better on a given metric.
+    Most often the metric will be code size or performance (speed), but others are possible.
+    }
+    
+    \green{
+    Before we dive into superoptimization properly, it seems good to briefly discuss the traditional approach\footnotemark.
+    A traditional compiler generally has (roughly) three main stages, commonly called the frontend, the middle-end, and the backend.
     Each part rewrites the program in such a way as to make the next part possible.
-    The frontend parses the code, to ensure that it is a syntactically meaningful program in the language of the compiler, and to transform the unstructured text of the code into a richer data structure called an abstract syntax tree, which is much easier to reason about programmatically.
+    A compiler, like a superoptimizer, takes as input a specification program in a formal language $L$, but rather than returning an equivalent program in $L$, it produces a program in a new language $L'$ (often but not always binary machine code), in accordance with the formal syntactic and semantic specifications of $L$ and $L'$.
+    The frontend parses the input code, to ensure that it is a syntactically meaningful program in the language of the compiler, and to transform the unstructured text of the code into a richer data structure called an abstract syntax tree, which is much easier to reason about programmatically.
     The middle-end performs some high-level transformations on the syntax tree, such as dead code elimination and constant propagation.
     This type of reasoning is very much akin to some of the reasoning done by some of the superoptimizers we will soon see in Chapter 1. 
     At some point during the processing done by the middle-end, it transforms the abstract syntax tree again, into another language that's somewhere between a syntax tree and a simplified assembly language, called an \textit{intermediate representation} (IR).
@@ -87,10 +95,11 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
     \footnotetext{
     For a more complete exploration of this topic, see one of the many high-quality textbooks on the subject, e.g. \cite{cooper2022engineering}.
     }
-    
+
     \green{
-    Our formal problem statement is the following: given a specification program in a formal language $L$, produce an equivalent program in $L$ which scores better on a given metric.
-    Most often the metric will be code size or performance (speed), but others are possible.
+    Like a compiler, a superoptimizer works in three main stages: synthesis, pruning (optional), and verification.
+    The synthesis and pruning stages are cooperative -- the synthesizer produces a family of (families of) candidate programs, and the pruner decides which (if any) of them are worth investigating.
+    If the pruner accepts a candidate, or if there's no pruner, it's then passed to the verifier. 
     }
     
     All these criteria represent possible desiderata in modifying our programs.
@@ -119,7 +128,7 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
             \item entertainment ("code golfing").
     \end{itemize}
     
-    Since the introduction of the term by \cite{massalin1987superoptimizer}, a wide variety of techniques have been harnessed to the goal of superoptimization.
+    Since the introduction of the term by Henry Massalin in \cite{massalin1987superoptimizer}, a wide variety of techniques have been harnessed to the goal of superoptimization.
     These techniques may be broadly categorized in several ways, including:
         \begin{itemize}
             \item the goals (optimization criteria) of the superoptimization system,
@@ -129,25 +138,19 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
         \end{itemize}
     In this paper we will focus on categorizing systems by synthesis technique, but first it seems advisable to briefly cover the other possible taxonomies.
     
-    % Motivation: We want to improve these criteria! Superoptimization is one way to do that!
-    Another possible taxonomy is by problem domain.
-    Many superoptimizers focus on assembly programs with integer operands, because there are powerful techniques for verifying such programs, but by no means all.
-    There have also been interesting superoptimizers targeting 
-        floating-point assembly programs, 
-        compiler intermediate representation (IR) programs, 
-        and high-level synthesis (HLS) languages for integrated circuit (IC) or field-programmable gate array \comment{(FPGA)}{readers won't remember all of these abbreviations in the later chapters, so I would wait to introduce them until they become relevant later} development.
-    
     A related way to categorize superoptimizers is by the limits they set on their problem domain.
     For example, a common limitation is that the output code must be expressible in a loop-free way
         -- loops are a difficult problem for many approaches,
-            not least because verifying equivalence of programs with loops is in general undecidable,
+            not least because verifying equivalence of programs with arbitrary loop conditions is in general undecidable \cite{turing1937tm} \cite{sipser2012computation},
             and because heuristic testing of loops may require unbounded time.
+
     Another common problem in superoptimizers is that it's very difficult to produce an accurate cost estimation for memory access.
         Modern computer systems generally have many-layered information storage systems, with multiple layers of caching, batching, and indirection between them, making the estimation of latency for any particular memory access very difficult.
-        For this reason, \comment{black-box measurement}{by this do you mean measuring time by running the actual program on actual hardware? If so I would say that since black-box can mean a lot of different things.} of performance is the gold standard, but this is sometimes cost-prohibitive.
+        For this reason, black-box measurement of performance (running the code on physical hardware) is the gold standard, but this is sometimes cost-prohibitive.
+
     Finally, the overall difficulty of any search problem scales with the size of the search space, which in superoptimization scales exponentially with the length of the synthesized program.
-        Therefore most superoptimization systems are limited mainly by available computation power, and impose a maximum synthesized program size for performance reasons.
-    
+    Therefore most superoptimization systems are strongly limited by available computation power, and performance reasons impose a maximum practical synthesized program size.
+    \green{This is particularly problematic when searching for constants; there may be dozens of possible operands for a register-to-register instruction, but an instruction with an embedded constant has $2^\text{bitwidth}$ possibilities. }
     
     There are also multiple approaches for verification of synthesized programs.
     Perhaps the simplest is heuristic testing: 
