@@ -67,12 +67,27 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
     One way to look at intelligence is as a tool for the performance of computations.
     It's natural when performing a computation to wish that it should work faster.
     Therefore the task of computational optimization is fundamental to life.
-
+    
     Removing our tongues from our cheeks, we still are left with the desire to improve our programs. 
     Traditional approaches in this field generally do so by means of an optimizing compiler, which rewrite programs using a large number of essentially find-and-replace transformation rules.
-    There is currently a wide variety of approaches to this problem in the literature, ranging from tools for the education of programmers to formal machine reasoning to multi-million-dollar so-called ``AI" systems.
-    In an attempt to keep things relatively concrete, for the purposes of this thesis, we have chosen to focus mainly on one type of program: sequences of machine (assembly) code, and one way of improving them: unguided search.
-
+    There is currently a wide variety of approaches to this problem in the literature, ranging from tools for the education of programmers, to formal machine reasoning software, to multi-million-dollar so-called ``AI" systems.
+    In an attempt to keep things relatively concrete, for the purposes of this thesis, we have chosen to focus mainly on one type of program: sequences of machine code (assembly), and one way of improving them: unguided search.
+    
+    \green{
+    A traditional compiler\footnotemark generally has (roughly) three main stages, commonly called the frontend, the middle-end, and the backend.
+    Each part rewrites the program in such a way as to make the next part possible.
+    The frontend parses the code, to ensure that it is a syntactically meaningful program in the language of the compiler, and to transform the unstructured text of the code into a richer data structure called an abstract syntax tree, which is much easier to reason about programmatically.
+    The middle-end performs some high-level transformations on the syntax tree, such as dead code elimination and constant propagation.
+    This type of reasoning is very much akin to some of the reasoning done by some of the superoptimizers we will soon see in Chapter 1. 
+    At some point during the processing done by the middle-end, it transforms the abstract syntax tree again, into another language that's somewhere between a syntax tree and a simplified assembly language, called an \textit{intermediate representation} (IR).
+    This IR is the input to the final part of the compiler, the backend.
+    The backend performs the final processing steps necessary to produce the final assembly code, such as register selection and instruction scheduling.
+    }
+    
+    \footnotetext{
+    For a more complete exploration of this topic, see one of the many high-quality textbooks on the subject, e.g. \cite{cooper2022engineering}.
+    }
+    
     \green{
     Our formal problem statement is the following: given a specification program in a formal language $L$, produce an equivalent program in $L$ which scores better on a given metric.
     Most often the metric will be code size or performance (speed), but others are possible.
@@ -83,16 +98,15 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
     
     In writing any kind of optimizer, one must first select a criterion by which to rank candidate programs.
     There are
-        \comment{a few potential measures by which to do so.}{Related to the comment above, these are independent of superoptimization so I would introduce them first in the context of classical optimization}
-    Perhaps the most immediately salient is performance: 
+        \addressed{a few potential measures by which to do so.}{Related to the comment above, these are independent of superoptimization so I would introduce them first in the context of classical optimization}
+    Perhaps the most immediately salient is performance:
         in almost every application, faster programs are preferred to slower ones.
     Another common goal is to reduce resource use: 
-        for example, a program which needs less memory is
-            \comment{preferable}{typical practice is to find something to cite for these kinds of claims (maybe just pick some paper that introduce a technique for minimizing memory usage)}
+        for example, a program which needs less memory is \addressed{preferable}{typical practice is to find something to cite for these kinds of claims (maybe just pick some paper that introduce a technique for minimizing memory usage)}
             to one which uses more.
-    There are also other resources whose conservation might be desired, for example 
+    There are also other resources whose conservation might be desired, for example:
     \begin{itemize}
-        \item functional units on an FPGA, \comment{}{Similarly, citations here would be ideal (but I wouldn't make this a high priority)}
+        \item functional units on an FPGA, \addressed{}{Similarly, citations here would be ideal (but I wouldn't make this a high priority)}
         \item power or space on a hardware design, 
         \item disk writes, 
         \item or disk or network bandwidth.
@@ -104,7 +118,6 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
             \item the output code is meant to run on a resource-poor system such as a microcontroller, 
             \item entertainment ("code golfing").
     \end{itemize}
-    
     
     Since the introduction of the term by \cite{massalin1987superoptimizer}, a wide variety of techniques have been harnessed to the goal of superoptimization.
     These techniques may be broadly categorized in several ways, including:
@@ -224,14 +237,15 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
                 %    so later papers which use SMT solvers get the benefits for free.)
                 and formulates the conjecture that ``no program of the target architecture computes the values of the goal terms within K cycles"
                     \comment{as an input to a satisfiability solver}{I would reorganize slightly so that this comes right before the explanation below}. 
-                
+            
             The graph rewriting\footnotemark uses a fairly standard term-rewriting strategy\footnotemark with the addition of a notion of equivalence for graph nodes.
             The connections between the E-graph nodes are then translated into clauses for the use of the SAT solver.
 
             % FIXME it would be good to explain the mapping of E-graph to SAT clause
 
             \footnotetext{
-            \comment{graph rewriting}{introduce graph rewriting}
+            \green{a}
+            \red{TODO:} \comment{graph rewriting}{introduce graph rewriting}
             }
                 
             \footnotetext{That is to say that, like a compiler, it has a set of rules by which it re-writes expressions. For each rule, it searches the document for that rule's the left-hand-side, and replaces it with the right-hand-side, and repeats until no more substitutions are possible.}
@@ -276,7 +290,7 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
         \\  \red{TODO}: explain CEGIS (briefly-ish) (each counterexample rules out at least one program, so you mostly always make progress, usually quickly).
 
         \subsection{Souper: A Synthesizing Superoptimizer}
-            Souper \cite{sasnauskas2017souper} is an engineering project to create a superoptimizer working on LLVM IR.
+            Souper \cite{sasnauskas2017souper} is an engineering project to create a superoptimizer working on LLVM intermediate representation (IR).
             This is desirable because LLVM is used as the "middle end" for a large number of compiler projects, and therefore Souper can be used for a wide variety of languages and target architectures.
             It has three main components:
                 an extractor, to produce Souper IR from LLVM IR,
@@ -402,7 +416,7 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
         Thus different abstract domains are useful for reasoning about different questions.
         }}
         
-        % \red{TO DO:} ask Greg about what exactly the \comment{abstraction function is doing}{the abstraction function lifts a set of concrete values to the abstract domain--if you think of the abstract domain as some \emph{structured} set of inputs, then the abstract function enforces that structure while preserving overapproximation. The concretization function is the opposite--it ``forgets'' the structure of the abstract domain.}
+        % Greg: the abstraction function lifts a set of concrete values to the abstract domain--if you think of the abstract domain as some \emph{structured} set of inputs, then the abstract function enforces that structure while preserving overapproximation. The concretization function is the opposite--it ``forgets'' the structure of the abstract domain.
         
         \green{
         Sharma et al. tested the performance of code generated by \textsc{cStoke} against code generated by \texttt{gcc -O3} and \texttt{icc -O3}\footnotemark on a wide variety of benchmarks, including common compiler benchmarks and some preexisting application programs.
