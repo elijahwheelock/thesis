@@ -10,6 +10,8 @@
 \usepackage{rotating}
 \usepackage{setspace} 
 \usepackage{xcolor} 
+\usepackage{enumitem} 
+    \setlist[itemize]{itemsep=1pt}
 \usepackage{graphicx}
 \graphicspath{ {./images/} }
 \usepackage{ulem} % strikethrough
@@ -22,7 +24,7 @@
 \newcommand{\comment}[2]{\textbf{#1} \textcolor{blue}{#2}}
 \newcommand{\addressed}[2]{{#1}}
 
-\title{An Overview of Superoptimizers}
+\title{A Survey of Superoptimizers}
 \author{Elijah Wheelock}
 \date{May 2024}
 \division{Mathematics and Natural Sciences}
@@ -30,39 +32,29 @@
 \department{Computer Science}
 \begin{document}
 \maketitle
-\frontmatter % this stuff will be roman-numbered
-\pagestyle{empty} % this removes page numbers from the frontmatter
-\chapter*{Acknowledgements} % Acknowledgements are optional
+\frontmatter % roman number these pages
+\pagestyle{empty} % remove page numbers from the frontmatter
+\chapter*{Acknowledgements}
 I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
-% \chapter*{Preface} % The preface is optional
 \tableofcontents
 
-\chapter*{Abstract} % If your abstract is longer than a page, there may be a formatting issue.
-    Superoptimization is a family of compilation techniques which seek to improve the characteristics of computer programs by computational means.
-    This is seen as distinct from ``traditional" optimization (perhaps more properly called meliorization), which seeks to improve programs by application of a large number of rewrite rules.
-    Another view is that superoptimization recharacterizes the problem of program improvement as a search problem, rather than an equational reasoning problem.
-    This is desirable because it allows the use of a wide variety of techniques from the literature on unguided search problems.
-    More broadly, superoptimization may be seen as an application of the techniques of program synthesis to the domain of concretely-realized (assembly code/IR) programs.
-    In practice, there is an infinite number of potential programs which compute the desired result, many of which are not intuitively obvious.
-    Therefore it is desirable to have special techniques for synthesizing (generating), pruning, and verifying such candidate programs. 
-    In this paper, we will survey a variety of methods from the literature which have been used for these ends.
+\chapter*{Abstract}
+    % \red{TODO:} FIXME: punch up first couple sentences, end with ``this is a survey".
 
-\mainmatter % here the regular arabic numbering starts
-\pagestyle{fancyplain} % turns page numbering back on
-\chapter*{Introduction} % The \introduction command is provided as a convenience. % if you want special chapter formatting, you'll probably want to avoid using it altogether
-    \addcontentsline{toc}{chapter}{Introduction} % intro gets included in the table of contents
+    Superoptimization is a family of compilation techniques which seek to improve the characteristics of computer programs by computational means.
+    In this paper, we will survey a variety of methods from the literature which have been used for superoptimization.
+    We systematized these techniques according to their approach to the problem of generating new programs.
+
+\mainmatter % arabic number these pages
+\pagestyle{fancyplain} % turn page numbering back on
+\chapter*{Introduction}
+    \addcontentsline{toc}{chapter}{Introduction} % includ intro in ToC
     \chaptermark{Introduction}
-    \markboth{Introduction}{Introduction} % make sure that the headers are right. % don't number intro as 1 so that chapter one is 1.
+    \markboth{Introduction}{Introduction} % fix headers; % don't number intro as 1 so that chapter one is 1
     \singlespacing % \onehalfspacing % \doublespacing
     
-        \red{TODO:} Reiterate abstract in introduction
-    %\\ \red{TODO:} add a bit more introduction about what program optimization is and how and why it is done classically
-    %\\ \red{TODO:} lay out a complete formal problem statement. 
-    %\\ \red{TODO:} cite some stuff, e.g. Turing on undecidability. probably anything a CS senior wouldn't know should be cited
-    %\\ \red{TODO:} introduce the general framework of synthesis/verification/pruning explicitly
-    %\\ \red{TODO:} talk about difficulties synthesizing constants, memory access
-     \\ \red{TODO:} talk about guaranteed progress, timeouts, etc.
-     \\ \red{TODO:} keep reorganizing
+    %   \red{TODO:} Reiterate abstract in introduction
+    %\\ \red{TODO:} keep reorganizing
     
     One way to look at the history of life is as a long climb towards greater intelligence.
     One way to look at intelligence is as a tool for the performance of computations.
@@ -71,120 +63,68 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
     
     Removing our tongues from our cheeks, we still are left with the desire to improve our programs. 
     Traditional approaches in this field generally do so by means of an optimizing compiler, which rewrite programs using a large number of essentially find-and-replace transformation rules.
-    There is currently a wide variety of approaches to this problem in the literature, ranging from tools for the education of programmers, to formal machine reasoning software, to multi-million-dollar so-called ``AI" systems.
+    There is currently a wide variety of other approaches to this problem in the literature, ranging from tools for the education of programmers, to formal machine reasoning software, to multi-million-dollar so-called ``AI" systems.
     In an attempt to keep things relatively concrete, for the purposes of this thesis, we have chosen to focus mainly on one type of program: sequences of assembly/machine code, and one way of improving them: unguided search.
     
-    \green{
     Our formal problem statement is the following: given a specification program in a formal language $L$, produce an equivalent program in $L$ which scores better on a given metric.
     Most often the metric will be code size or performance (speed), but others are possible.
-    }
     
-    \green{
     Before we dive into superoptimization properly, it seems good to briefly discuss the traditional approach\footnotemark.
-    A traditional compiler generally has (roughly) three main stages, commonly called the frontend, the middle-end, and the backend.
+    A traditional compiler has (roughly) three main stages, commonly called the frontend, the middle-end, and the backend.
     Each part rewrites the program in such a way as to make the next part possible.
     A compiler, like a superoptimizer, takes as input a specification program in a formal language $L$, but rather than returning an equivalent program in $L$, it produces a program in a new language $L'$ (often but not always binary machine code), in accordance with the formal syntactic and semantic specifications of $L$ and $L'$.
     The frontend parses the input code, to ensure that it is a syntactically meaningful program in the language of the compiler, and to transform the unstructured text of the code into a richer data structure called an abstract syntax tree, which is much easier to reason about programmatically.
     The middle-end performs some high-level transformations on the syntax tree, such as dead code elimination and constant propagation.
-    This type of reasoning is very much akin to some of the reasoning done by some of the superoptimizers we will soon see in Chapter 1. 
+    This type of reasoning is very much akin to some of the dataflow reasoning done by some of the superoptimizers we will soon see in Chapter 1. 
     At some point during the processing done by the middle-end, it transforms the abstract syntax tree again, into another language that's somewhere between a syntax tree and a simplified assembly language, called an \textit{intermediate representation} (IR).
     This IR is the input to the final part of the compiler, the backend.
     The backend performs the final processing steps necessary to produce the final assembly code, such as register selection and instruction scheduling.
-    }
     
     \footnotetext{
     For a more complete exploration of this topic, see one of the many high-quality textbooks on the subject, e.g. \cite{cooper2022engineering}.
     }
-
+    
     \green{
     Like a compiler, a superoptimizer works in three main stages: synthesis, pruning (optional), and verification.
-    The synthesis and pruning stages are cooperative -- the synthesizer produces a family of (families of) candidate programs, and the pruner decides which (if any) of them are worth investigating.
+    The synthesis and pruning stages are cooperative -- the synthesizer produces a family of candidate programs, and the pruner decides which (if any) of them are worth investigating.
     If the pruner accepts a candidate, or if there's no pruner, it's then passed to the verifier. 
+    If it passes the verifier, then depending on the system, it may be passed to the user for further review, or considered correct and used as-is.
     }
     
-    All these criteria represent possible desiderata in modifying our programs.
-    That is to say, these criteria are also the motivations behind writing optimizers and superoptimizers. 
-    
-    In writing any kind of optimizer, one must first select a criterion by which to rank candidate programs.
-    There are
-        \addressed{a few potential measures by which to do so.}{Related to the comment above, these are independent of superoptimization so I would introduce them first in the context of classical optimization}
-    Perhaps the most immediately salient is performance:
-        in almost every application, faster programs are preferred to slower ones.
-    Another common goal is to reduce resource use: 
-        for example, a program which needs less memory is \addressed{preferable}{typical practice is to find something to cite for these kinds of claims (maybe just pick some paper that introduce a technique for minimizing memory usage)}
-            to one which uses more.
-    There are also other resources whose conservation might be desired, for example:
-    \begin{itemize}
-        \item functional units on an FPGA, \addressed{}{Similarly, citations here would be ideal (but I wouldn't make this a high priority)}
-        \item power or space on a hardware design, 
-        \item disk writes, 
-        \item or disk or network bandwidth.
-    \end{itemize}
-    A less-common goal is to reduce the code size of generated programs.
-    This might be desired for reasons such as:
-    \begin{itemize}
-            \item performance (reducing instruction cache misses or instruction pipeline delays), 
-            \item the output code is meant to run on a resource-poor system such as a microcontroller, 
-            \item entertainment ("code golfing").
-    \end{itemize}
-    
-    Since the introduction of the term by Henry Massalin in \cite{massalin1987superoptimizer}, a wide variety of techniques have been harnessed to the goal of superoptimization.
-    These techniques may be broadly categorized in several ways, including:
-        \begin{itemize}
-            \item the goals (optimization criteria) of the superoptimization system,
-            \item the techniques used for synthesis and/or verification of generated programs,
-            \item the problem domain,
-            \item the capabilities/limitations of the system.
-        \end{itemize}
-    In this paper we will focus on categorizing systems by synthesis technique, but first it seems advisable to briefly cover the other possible taxonomies.
-    
-    A related way to categorize superoptimizers is by the limits they set on their problem domain.
-    For example, a common limitation is that the output code must be expressible in a loop-free way
-        -- loops are a difficult problem for many approaches,
-            not least because verifying equivalence of programs with arbitrary loop conditions is in general undecidable \cite{turing1937tm} \cite{sipser2012computation},
-            and because heuristic testing of loops may require unbounded time.
-
-    Another common problem in superoptimizers is that it's very difficult to produce an accurate cost estimation for memory access.
-        Modern computer systems generally have many-layered information storage systems, with multiple layers of caching, batching, and indirection between them, making the estimation of latency for any particular memory access very difficult.
-        For this reason, black-box measurement of performance (running the code on physical hardware) is the gold standard, but this is sometimes cost-prohibitive.
-
-    Finally, the overall difficulty of any search problem scales with the size of the search space, which in superoptimization scales exponentially with the length of the synthesized program.
-    Therefore most superoptimization systems are strongly limited by available computation power, and performance reasons impose a maximum practical synthesized program size.
-    \green{This is particularly problematic when searching for constants; there may be dozens of possible operands for a register-to-register instruction, but an instruction with an embedded constant has $2^\text{bitwidth}$ possibilities. }
-    
-    There are also multiple approaches for verification of synthesized programs.
-    Perhaps the simplest is heuristic testing: 
-        directly measuring the output of the synthesized program against a set of test cases, usually generated by the input (unoptimized) program.
-    Another approach is boolean verification: using a SAT solver to prove bitwise equivalence of the program's inputs and outputs.
-    This is potentially very expensive, but if done correctly guarantees the correctness of the generated program. 
-    
-    Most interestingly for our purposes, superoptimizers can be categorized by the approach they take to synthesis of superoptimized programs.
-    This is the measure on which published systems vary most widely, and the selection of approach is perhaps the most salient question for the authors of new systems.
-    These approaches vary widely in sophistication, complexity, and power.
-    
-    Perhaps the simplest possible approach, pioneered by \cite{massalin1987superoptimizer}, is simple enumeration. 
-    The technique is to line up all possible programs in order of length, testing each in turn by the selected verification strategy. 
+    \green{
+    Another way to look at things is that superoptimization recharacterizes the problem of program improvement as a search problem, rather than an equational reasoning problem.
+    This is seen as distinct from ``traditional" optimization (perhaps more properly called meliorization), which seeks to improve programs by application of a large number of rewrite rules.
+    This is desirable because it allows the use of a wide variety of techniques from the literature on unguided search problems.
+    More broadly, superoptimization may be seen as an application of the techniques of program synthesis to the domain of concretely-realized (assembly code/IR) programs.
+    In practice, there is an infinite number of potential programs which compute the desired result, many of which are not intuitively obvious.
+    Therefore it is desirable to have special techniques for synthesizing, pruning, and verifying such candidate programs. 
+    }
 
 \chapter{Symbolic Search}
-    \red{TODO:} Chapter intro: what is symbolic search?
+    %   \red{TODO:} Chapter intro: what is symbolic search?
+    %\\ \red{TODO:} talk about guaranteed progress, timeouts, etc.
+    \green{
+    Perhaps the simplest possible approach, pioneered by \cite{massalin1987superoptimizer}, is simple enumeration. 
+    The technique is to line up all possible programs "alphabetically" in order of length, testing each in turn by the selected verification strategy. 
+    }
     \section{Enumeration}
         \subsection{Superoptimizer -- A Look at the Smallest Program}
             Happily, the earliest published superoptimizer is also among the simplest, and so will serve admirably as an introduction to the idea.
-            The word "superoptimizer" dates from Henry Massalin's paper, "Superoptimizer -- A Look at the Smallest Program" \cite{massalin1987superoptimizer}.
+            The word ``superoptimizer" dates from Henry Massalin's paper, ``Superoptimizer -- A Look at the Smallest Program" \cite{massalin1987superoptimizer}.
             Massalin's superoptimizer, like most superoptimizers, operates in three main phases: synthesis, pruning (optional), and verification.
                 
             The synthesis stage in this system is, perhaps, the simplest imaginable: simply write down all assembly programs in alphabetical order.
             The advantage of this approach is that if a result is found, it will be the smallest possible code that can compute the desired result.
             In the loop-free case, this is likely also the fastest result -- running fewer instructions is generally preferable.
-            However, on many architectures, the latency for instructions varies -- for example, division may be more expensive than multiplication, which may be more expensive than addition \cite{fog1996instructiontables}.
+            However, on many architectures, the latency for instructions varies -- for example, division may be more expensive than multiplication, which may be more expensive than addition \cite{fog2022instructiontables}.
             The disadvantage is that the search space blows up exponentially with the length of function sought, making it intractable for all but the smallest code segments.
                 
             The pruning stage is also relatively simple.
-            There are some obviously-spurious code sequences if what is sought is the shortest possible correct code, e.g. "move X,Y; move Y,X".
+            There are some obviously-spurious code sequences if what is sought is the shortest possible correct code, e.g. ``move X,Y; move Y,X".
             Code containing such sequences may be rejected early, before the more-expensive verification stage.
                 
             Massalin gives two distinct approaches to verification, driven by resource limitations.
-            The reliable, but slow and expensive way, is to logically test the bitwise equivalency of the candidate program to the desired program, using what Massalin calls a "boolean program verifier".
+            The reliable, but slow and expensive way, is to logically test the bitwise equivalency of the candidate program to the desired program, using what Massalin calls a ``boolean program verifier".
             As we'll see soon, this approach has become much more practical in the years since then, due to improvements both in hardware and SMT solvers. 
                 
             This system, although relatively simple, and harshly limited by the available computation hardware of its era, achieves some qualitatively interesting results -- for example, Massalin uses it to search for efficient instruction sequences to divide by constants, but fails to find any.
@@ -217,7 +157,6 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
             Bansal and Aiken's system achieves quite impressive results -- a speedup by a factor of between 1.7 and 10, (mean ~4.9) in compute-intensive programs, with a 1-5\% speedup in more general programs, all compared to code already nominally optimized by the compiler.
 
     \section{SMT}
-        \green{
         Satisfiability modulo theories (SMT) is family of extensions to the classic problem in computer science of boolean formula satisfiability (known as SAT).
         The SAT problem is, given a formula of boolean logic composed of 
                 the boolean operators 'and', 'or', and 'not';
@@ -227,33 +166,32 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
         SAT was proven to be NP-complete in \cite{cook1971sat}, and so is widely considered to be intractable in the general case.
         Furthermore, depending on the theories used, SMT problems may be fully undecidable.
         However, in practice many of the problems that naturally arise in various fields, including in program synthesis, are able to be solved in reasonable time by specially constructed solver programs, for example Z3 \cite{demoura2008z3}.
-        Z3 is commonly used in program synthesis, and adds theories of equality reasoning, arithmetic, fixed-size bit-vectors, arrays, and quantifiers.
+        Z3 is commonly used in program synthesis, and adds theories of variable equality, arithmetic, fixed-size bit-vectors, arrays, and quantifiers.
+
+        \green{
+        A reasonably complete explanations of the workings of a SMT solver would be beyond the scope of this work.
+        The interested reader may wish to read \cite{demoura2008z3} and \cite{dpll1962theorem}.
         }
 
         \subsection{Denali: A Goal-directed Superoptimizer}
             Another early work on superoptimization, by Joshi et al. \cite{joshi2002denali} uses an automated theorem prover to simultaneously synthesize and verify new programs.
             It takes a program in a custom low-level language, expresses it in a symbolic form as a graph of all equivalent ways of computing its output expressions
                 \addressed{called the E-graph}{I would be inclined to have a separate description of E-graphs, but it depends on the structure of the section},
-                % I don't think any of the other papers I'm covering use E-graphs (directly),
-                % so I think it makes sense to define the term closest to its use.
-                %   (I believe this type of E-graph reasoning got merged into SMT solvers,
-                %    so later papers which use SMT solvers get the benefits for free.)
-                and formulates the conjecture that ``no program of the target architecture computes the values of the goal terms within K cycles"
-                    \comment{as an input to a satisfiability solver}{I would reorganize slightly so that this comes right before the explanation below}. 
+                and \green{uses that to generate input for a SAT solver.}
             
-            The graph rewriting\footnotemark uses a fairly standard term-rewriting strategy\footnotemark with the addition of a notion of equivalence for graph nodes.
-            The connections between the E-graph nodes are then translated into clauses for the use of the SAT solver.
-
-            % FIXME it would be good to explain the mapping of E-graph to SAT clause
-
-            \footnotetext{
-            \green{a}
-            \red{TODO:} \comment{graph rewriting}{introduce graph rewriting}
+            \green{
+            Generating the E-graph is a fairly complicated process, since matching terms in a graph is not trivial.
+            Denali uses a special graph matching algorithm by some of the same authors, described in \cite{detlefs2005simplify}.
+            It uses a set of mathematical axioms as augmentation rules to generate a graph where each node is an equivalence class of expressions for each term of the input program. It does this until it reaches a fixed point, i.e. no more matches can be made and thus each equivalence class is complete.
+            For example, if one term in the specification is $x * 2$, it would use the fact that multiplication by one is equivalent to left-shifting by one to augment that term to the equivalence class $\{x * 2, x \ll 1\}$.
             }
-                
+            
             \footnotetext{That is to say that, like a compiler, it has a set of rules by which it re-writes expressions. For each rule, it searches the document for that rule's the left-hand-side, and replaces it with the right-hand-side, and repeats until no more substitutions are possible.}
                 
-            The satisfiability step requires a little more detail.
+            The connections between the E-graph nodes are then translated into clauses for the use of the SAT solver.
+            \green{
+            Denali formulates the conjecture that ``no program of the target architecture computes the values of the goal terms within $K$ cycles" as an input to a satisfiability solver.
+            }
             In order to logically express the number of cycles required for the whole program, it has to express the time by which every intermediate step will be completed.
             To do this, Denali uses an additional set of constraints on the times of launching, completion, and availability, which may be roughly summarized by the following slogans:
             \begin{itemize}
@@ -262,45 +200,60 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
                 \item A value is available at all times at or after its completion time.
                 \item Only one operation may be launched per cycle (The paper gives some remarks on extending to multiprocessing systems, but does not explain in detail).
             \end{itemize}
-                
+            
             The results section in this paper is not extensive, but they report that Denali was able to meet or exceed the performance of an aggressively-optimizing C compiler on certain problems.
 
         \subsection{Unbounded Superoptimization}
-            A more modern take on a similar approach to Denali is the work by Jangda and Yorsh in "Unbounded Superoptimization" \cite{jangda2017unbounded}.
-            Rather than matching E-graphs, which in the intervening years had been integrated into SMT solvers, it to directly encodes the target program as a logical formula.
+            A more modern take on a similar approach to Denali is the work by Jangda and Yorsh in ``Unbounded Superoptimization" \cite{jangda2017unbounded}.
+            Rather than matching E-graphs, which in the intervening years had been integrated into SMT solvers, it directly encodes the target program as a logical formula.
             It does this by encoding the input program, treating it as the first candidate output, and
-                \comment{"squeezing" it by imposing lower and lower cost bounds on the solver}{I would make this a bit more explicit--how exactly are computational bounds encoded and how does the tool decide what bounds to use?}.
-            This "top-down" approach has the advantage that if the superoptimizer is halted early, it can still return a correct output, unlike many superoptimizers which work "bottom-up" and thus start without any candidate programs.
-
+                \addressed{``squeezing" it by imposing lower and lower cost bounds on the solver}{I would make this a bit more explicit--how exactly are computational bounds encoded and how does the tool decide what bounds to use?}.
+            This ``top-down" approach has the advantage that if the superoptimizer is halted early, it can still return a correct output, unlike many superoptimizers which work ``bottom-up" and thus start without any candidate programs.
+            
             Jangda and Yorsh tested their technique on a set of problems from Hacker's Delight \cite{warren2013hackers}.
             They successfully generated optimal code for 17 of 25 problems, and failed for 8.
             Comparing the output of their technique to the outputs of \texttt{gcc -O3}\footnotemark, they found that for 3 of the problems the code generated by their tool was about 20\% faster than (and algorithmically distinct from) the output of \texttt{gcc -O3}; on the other 14 problems the performance was identical to that of \texttt{gcc -O3}.
-
+            
             \footnotetext{
-            GCC is the Gnu Compiler Collection (originally, the Gnu C Compiler; it now supports many languages), one of the highest-quality optimizing compilers for C programs.
+            \texttt{gcc} is the Gnu Compiler Collection (originally, the Gnu C Compiler; it now supports many languages), one of the highest-quality optimizing compilers for C programs.
             It's common for compilers to offer (at least) four different optimization levels, from {-O0} to {-O3}, where {-O0} is more-or-less a direct translation of the source program, and {-O3} is the highest level of compiler aggression that remains standard-compliant.
             (It's common practice in industry to use {-O2} as standard, because writing perfectly standard-compliant C code is not trivial.)
             }
 
     \section{CEGIS}
-        \green{
         Counter-example guided inductive synthesis (CEGIS) is a program synthesis technique introduced by Solar-Lezama et al. in \cite{solar-lezama2006sketch}.
         Like some of the other techniques we've seen so far, it takes a specification program and computes an output which satisfies the specification (if possible).
         However, rather than rewriting the specification to be more efficient, like a superoptimizer, it takes an additional input, an incomplete program called a ``sketch", and computes appropriate program fragments to fill one or more ``holes" left in the sketch by the user.
         Its output is then the completed sketch, transformed into a fully-functioning implementation of the specification, or an error, if such an implementation is impossible.
-        CEGIS works by 
+        
+        \green{
+        CEGIS works by using two cooperating SMT solver instances, one to generate new possible program completions, and another to generate counterexample inputs that possibly rule out those completions.
+        Formally, the CEGIS system from the original paper\footnotemark attempts to solve the following boolean formula, where $P$ is the specification program and $S$ is the sketch:
+        \[
+            \exists c \in \{0,1\}^k,\; \forall x \in \{0,1\}^m \text{ such that } P(x) = S(x,c)
+        \]
+        First, it generates a random input $x$ to the sketch, and uses the first solver to find a candidate pregram completion $c$ such that $S(x,c) = P(x)$. 
+        If it can't find such a completion, then the specification is considered incorrect, and an error is returned.
+        If it does find an appropriate $c$, it then uses the second solver to attempt to verify that the equation $S(x,c) = P(x)$ holds for \textit{all} $x$.
+        If it is, then the sketch is completed; otherwise, the counterexample provided by the second solver is added to the set of inputs $I$ considered by the first solver, so that in future iterations it attempts to find $c$ such that the formula
+        \[
+                \bigwedge_{x\in I} S(x, c) = P(x)
+        \]
+        holds.
         }
-        \\  \red{TODO}: explain CEGIS (briefly-ish) (each counterexample rules out at least one program, so you mostly always make progress, usually quickly).
 
+        \footnotetext{
+        The original paper covered only the synthesis of constants; later papers extended the idea to larger programs.
+        The interested reader may wish to look at \cite{gulwani2011loopfree}.
+        }
+        
         \subsection{Souper: A Synthesizing Superoptimizer}
             Souper \cite{sasnauskas2017souper} is an engineering project to create a superoptimizer working on LLVM intermediate representation (IR).
-            This is desirable because LLVM is used as the "middle end" for a large number of compiler projects, and therefore Souper can be used for a wide variety of languages and target architectures.
+            This is desirable because LLVM is used as the ``middle end" for a large number of compiler projects, and therefore Souper can be used for a wide variety of languages and target architectures.
             It has three main components:
                 an extractor, to produce Souper IR from LLVM IR,
                 a synthesizer using counterexample-guided interactive synthesis,
                 and a verifier using an SMT solver.
-            
-            \red{TODO}: cite Gulwani et al. "Synthesis of loop-free programs"?
             
             Souper uses a custom IR analogous to a purely-functional subset of LLVM IR without control flow\footnotemark, represented for computational purposes as a directed acyclic dataflow graph.
             It is also limited to integer instructions; it has no model for floating-point, memory, or vector operations.
@@ -308,18 +261,32 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
             
             \footnotetext{Some information about control flow external to the code segment under consideration is preserved, but control flow operations within a code segment are forbidden.}
             
-            \red{TODO:} a bit on the synthesizer
+            \green{
+            To ensure that synthesized programs are low-cost, Souper wraps its CEGIS step in a loop: first it attempts to synthesize a zero-instruction program (only using a constant or an input), then a one-instruction program, then a two-instruction program, and so on.
+            Thus its cost function is simply the code size, or number of instructions.
+            }
             
-            \red{TODO}: Threats to soundness:
-            \\ \comment{Souper bugs}{Bugs in the synthesis tool itself are common to all approaches--you can bring it up here since Souper is purportedly more ``production-ready'' than others but I would make it clear that this is not unique to Souper},
-            \\ LLVM bugs,
-            \\ \comment{Solver bugs}{Same as the comment above. I would consider separating these two from the other two, since LLVM bugs and undefined behavior are more unique to Souper},
-            \\ Undefined behavior: One issue with relying on the semantics of LLVM is that there are \comment{areas of undefined behavior}{elaborate}!
+            \green{
+            The authors spend some effort discussing some problems which might make Souper produce incorrect output.
+            The most obvious possibility, which is of course a potential problem for any computer system, is a bug in Souper's implementation.
+            However, they observed miscompilations arising from other problems as well, including a bug in the solver library they were using.
+            Perhaps the most interesting, however, was Souper's exploitation of undefined behavior\footnotemark. 
+            Souper asserts to the SMT solver that no undefined behavior may occur in either the specification or the generated program; therefore if a program accidentally depends on undefined behavior, Souper is even more likely to find and exploit it than a standard compiler, and the behavior of Souper's output may therefore be surprising.
+            }
+            
+            \footnotetext{
+            \green{
+                Undefined behavior is a concept in certain programming languages, which attempt to specify the \textit{observable behavior} of the code generated by the compiler from compliant programs; however, if a program is considered non-compliant, the behavior of the code emitted by the compiler is considered completely unspecified.
+                For example, signed integer overflow is considered undefined behavior by the C standard.
+                This property of some specifications has been increasingly exploited by compiler writers, particularly in the C/C++ language community, to improve the performance of their compilers on certain benchmarks by making strong assumptions that code which may potentially exhibit undefined behavior will never encounter a situation in which it does so.
+                This allows, for example, removing checks for signed integer overflow, because checking whether undefined behavior has occurred is by definition undefined.
+            }
+            }
 
         \subsection{Dataflow-Based Pruning for Speeding up Superoptimization}
             Mukherjee et al. \cite{mukherjee2020dataflow} enhance Souper with an additional family of pruning strategies based on dataflow reasoning. 
             Pruning spurious candidates as early as possible is obviously highly desirable, because every hole for a constant represents a potentially-costly invocation of the MST solver; a hole for a partial program is even worse, as it represents a possibly-infinite family of related candidates.
-            This paper uses both \textit{forward} and \textit{backward} dataflow analysis techniques to prove candidate expressions incorrect before they are fully substantiated (while they still contain "holes", constants or sub-expressions which have yet to be synthesized).
+            This paper uses both \textit{forward} and \textit{backward} dataflow analysis techniques to prove candidate expressions incorrect before they are fully substantiated (while they still contain ``holes", constants or sub-expressions which have yet to be synthesized).
             Mukherjee et al. define forward techniques as those which work by drawing a chain of reasoning from properties of the specification program's output into properties which must hold for a correct candidate program.
             By contrast, backward techniques draw inferences from the program's inputs into the candidate.
             
@@ -361,15 +328,28 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
     \section{Markov Chain Monte Carlo Sampling}
     \subsection{Stochastic Superoptimization}
         Markov chain monte carlo (MCMC) sampling is a technique used to sample from complex possibility spaces, first used for superoptimization by Schkufza et al. in \cite{schkufza2013stoke}.
-        Essentially, the strategy works by drawing candidate rewrites from a distribution with \comment{favorable properties}{add some math!} (in this case, a bias toward low cost). % explain equation 4 -- cheap candidates have higher probability
-        
-        \red{TODO}: FIXME
+        Essentially, the strategy works by drawing candidate rewrites from a distribution with favorable properties (in this case, a bias toward low cost). \green{The desired distribution of candidate programs is given by the following:
         \[
             p(\mathcal{R;T}) = \frac{1}{Z} \mathrm{exp}\left(-\beta \cdot c(\mathcal{R;T})\right)
         \]
-        The candidates are then scored by a cost function taking into account estimates of both correctness and performance.
-        A candidate which scores better than the current best is always accepted; a worse one is accepted with probability proportional to $1/e^{(c'/c)}$, where $c$ is the cost of the old candidate and $c'$ is the cost of the new one. 
-        This is the Metropolis-Hastings algorithm \cite{metropolis1953montecarlo} \cite{hastings1970mcmc}.
+        where $p(\mathcal{R;T})$ is the probability of generating candidate rewrite $\mathcal{R}$ given target specification $\mathcal{T}$; $Z$ is a normalization constant so that sum of probabilities of all candidates adds up to 1; $\beta$ is a constant, and $c$ is the cost function. 
+        Essentially, this distribution enforces the property that a more costly candidate is much less likely than a less costly one: a candidate with cost $n$ has probability proportional to $1/e^n$.
+        }
+
+        \green{
+        Since it's difficult to draw from this distribution directly, the Metropolis-Hastings algorithm \cite{metropolis1953montecarlo} \cite{hastings1970mcmc} allows sampling from it indirectly by using a chain of rewrites.
+        The algorithm maintains a current best candidate, and draws rewrites from a given pool.
+        }
+        A rewrite which scores better than the current candidate is always accepted; a worse one is accepted with probability proportional to $1/e^{(c'/c)}$, where $c$ is the cost of the old candidate and $c'$ is the cost of the new one. 
+        \green{
+        There are four rewrites in the pool used by \textsc{Stoke}: 
+        \begin{itemize}
+            \item Opcode: a random instruction is selected from the candidate and replaced by a random other instruction which take the same number and type of operands.
+            \item Operand: a random instruction is selected from the candidate and one of its operands is replaced by a random one of the same type.
+            \item Swap: two instructions from the candidate are swapped.
+            \item Instruction: a random instruction is selected from the candidate and replaced by a random other instruction, or by a no-op
+        \end{itemize}
+        }
         
         Correctness is estimated by the hamming distance (bitwise difference: the number of corresponding bits that differ between the two strings, plus insertions, if needed) between the outputs of the candidate and those of the specification on the set of test cases.
         The test cases are generated based on annotations provided by the user; by default, they are uniformly random bitstrings.
@@ -411,31 +391,29 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
         The preconditions are generated from the verification conditions via abstract interpretation\footnotemark by conjoining abstractions of the test inputs on which the target and candidate are equivalent in progressively more-restrictive abstract domains.
         The domains used in \textsc{Cove} are bitvector alignment to 1, 2, 4, 8, 16, 32, and 64 bytes, bit-vector equalities, and bit-vector intervals (interpreted as intervals of unsigned integers).
         
-        \footnotetext{\green{
+        \footnotetext{
         Abstract interpretation is a means of over-approximating the behavior of programs.
         For example, we might abstract the integers in a program into the domain of sign, i.e. positive, negative, or zero.
         If we're multiplying our integers, this abstraction would still allow us to prove things about the final output;
         on the other hand, if we're adding them, then we'd have less information (for example, a positive times a negative is a negative, but a positive plus a negative is indeterminate).
         Thus different abstract domains are useful for reasoning about different questions.
-        }}
+        }
         
         % Greg: the abstraction function lifts a set of concrete values to the abstract domain--if you think of the abstract domain as some \emph{structured} set of inputs, then the abstract function enforces that structure while preserving overapproximation. The concretization function is the opposite--it ``forgets'' the structure of the abstract domain.
         
-        \green{
         Sharma et al. tested the performance of code generated by \textsc{cStoke} against code generated by \texttt{gcc -O3} and \texttt{icc -O3}\footnotemark on a wide variety of benchmarks, including common compiler benchmarks and some preexisting application programs.
         In the interest of fairness, they provided the compilers with annotations of the preconditions generated by \textsc{Cove}, insofar as that was possible.
-        They found that \textsc{cStoke} always matched or exceeded GCC, and almost always matched or exceeded ICC.
-        Furthermore, on some programs, the code generated by \textsc{cStoke} was up to five times faster than code generated by GCC, and up to six times faster than that generated by ICC.
-        }
+        They found that \textsc{cStoke} always matched or exceeded \texttt{gcc}, and almost always matched or exceeded \texttt{icc}.
+        Furthermore, on some programs, the code generated by \textsc{cStoke} was up to five times faster than code generated by \texttt{gcc}, and up to six times faster than that generated by \texttt{icc}.
         
-        \footnotetext{ICC is the Intel C Compiler.}
+        \footnotetext{\texttt{icc} is the Intel C Compiler.}
 
     \subsection{Scaling up Superoptimization}
-        Perhaps it's a natural question, when comparing the strengths and weaknesses of various superoptimization techniques, to ask, "why not use them all together, and let the strengths of each cover the weaknesses of the others?"
+        Perhaps it's a natural question, when comparing the strengths and weaknesses of various superoptimization techniques, to ask, ``why not use them all together, and let the strengths of each cover the weaknesses of the others?"
         Phothilimthana et al. attempt precisely this in \cite{phothilimthana2016scaling}.
         They also spend considerable effort comparing and contrasting results achieved by various techniques.
         
-        This paper uses multiple techniques for synthesis in a "cooperative superoptimizer".
+        This paper uses multiple techniques for synthesis in a ``cooperative superoptimizer".
         \textsc{Lens}, a new enumerative superoptimization algorithm,
         a sliding-window strategy to decompose programs too large to superoptimize directly,
         and a synthesizer combining communicating symbolic, stochastic, and enumerative search programs.
@@ -454,7 +432,7 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
             rather than checking equivalence of the candidate with the target, it can check the equivalence of the sequence prefix-candidate-suffix with the sequence prefix-target-suffix.
         This allows a few additional optimizations.
         
-        The strategies used in the "cooperative superoptimizer" are
+        The strategies used in the ``cooperative superoptimizer" are
         \begin{itemize}
             \item \textsc{Lens} on the whole program,
             \item \textsc{Lens} with window decomposition,
@@ -466,13 +444,20 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
         The communication between synthesizers takes the form of a shared best solution, $p_{best}$.
         The whole-program \textsc{Lens} and SMT synthesizers don't use $p_{best}$. The others restart their synthesis, using $p_{best}$ as the new starting point instead of the target.
         
-        \red{TODO:} results
+        Phothilimthana et al. tested the components of their system in a variety of ways. We have summarized the most interesting results in the following list:
+        \begin{itemize}
+            \item They tested \textsc{Stoke} vs the whole-program SMT solver vs whole-program \textsc{Lens}; they found that \textsc{Lens} was faster and solved more of their benchmark programs than their implementations of either of the others.
+            \item They tested multiple versions of \textsc{Lens} with and without a number of strategies; they found that their pruning strategies improved search speed by 11 times.
+            \item They tested the cost of programs produced by \textsc{Lens} with and without the sliding window decomposition, and found that it did not make a consistent improvement to cost.
+            \item They tested their whole cooperative system vs a system running one whole-program \textsc{Lens} instance and a large number of sliding-window \textsc{Lens} instances, providing equal computational resources to both systems; they found that the cooperative superoptimizer was 33\% faster and solved\footnote{matched best-known solutions for} more of their benchmark problems.
+            \item They tested the speed of the code generated by their system against that generated by \texttt{gcc -O3} and found that their code met or exceeded \texttt{gcc}'s on all benchmark programs.
+        \end{itemize}
         
         \begin{figure}
             \centering
-            \textbf{Your title}\par\medskip
+            %\textbf{Your title}\par\medskip
             \includegraphics[scale=0.5]{scaling}
-            \caption{Your caption}
+            \caption{An example comparison of the process of optimizing a program by five different superoptimizers: 'symbolic' is an SMT solver; 'stoch\_s' and 'stoch\_o' are \textsc{Stoke} starting from a random program and from the specification respectively; 'enum' is \textsc{Lens}; 'cooperative' is the whole system together.}
         \end{figure}
 
     % on backburner
@@ -492,9 +477,7 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
         
         This formulation \textit{requires} that $\pi$ be differentiable with respect to $\theta$, i.e. that $\frac{\partial \pi(s,a, \theta)}{\partial \theta}$ exists.
         The reason this formulation is convenient is that there is no term of the form $\frac{\partial d^\pi(s)}{\partial \theta}$, i.e. the effect of policy changes on the distribution of states is irrelevant.
-        This allows the gradient to be conveniently estimated by sampling.  % <- ask Greg to please clarify
-
-        \comment{}{(My local copy is not quite up to date here so I don't have text to highlight) The $Q$ function measures the \emph{long-term} rewards starting from a given state-action pair, not the immediate reward.}
+        This allows the gradient to be conveniently estimated by sampling.
 
         %\subsection{Learning Performance-Improving Code Edits} \cite{}
 
@@ -557,7 +540,7 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
             With this paper we return to the assembly superoptimization task which has been our focus through most of this document. 
             They use a transformer model\footnotemark in a supervised learning approach which attempts to learn input-output matching for assembly programs, with unoptimized binaries (\texttt{gcc -O0}) being used as the input examples, and optimized binaries (\texttt{gcc -O3}) being used as the outputs.
             
-            \footnotetext{Transformers are a sequence-to-sequence machine learning model introduced in 2017 by Vaswani et al. in \cite{vaswani2017attention}, which translate "words" of the input sequence into vectors so that they can be directly manipulated by a neural net; they are distinct from autoencoders in that they have an additional "attention" mechanism, whereby words from a sliding context window are scored for importance before being processed by the main net.}
+            \footnotetext{Transformers are a sequence-to-sequence machine learning model introduced in 2017 by Vaswani et al. in \cite{vaswani2017attention}, which translate ``words" of the input sequence into vectors so that they can be directly manipulated by a neural net; they are distinct from autoencoders in that they have an additional ``attention" mechanism, whereby words from a sliding context window are scored for importance before being processed by the main net.}
             
             The SILO algorithm essentially consists of replacing the outputs from the training set when a better one is found for a given input, then continuing training.
             
@@ -569,20 +552,89 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
             They found that REINFORCE consistently made improvements only on the same few problems from the test set, while SILO improved its performance with training.
 
 \chapter{Conclusion}
-\red{TODO:} future work?, comparison of techniques, 
-% to make it passable, fill out todos
-% work on transitions around chapters
-    % introduction and conclusion for each, 
-    % make sure the background information sets up the reader to understand what comes after
-% to make it pretty decent,
-    % do some synthesis of the "overall story" of superoptimization
-    % within each chapter put a bit of a conclusion for the chapter
-% for even better, add more background and more papers, and ideally implementations
-
-% conclusion:
-    % briefly summarize intro, talk about different approaches again, advantages & disadvantages
-    % more results-focused
-    % if I've noticed open directions, point them out
+    % \red{TODO:} future work?, comparison of techniques, 
+    % conclusion:
+        % briefly summarize intro, talk about different approaches again, advantages & disadvantages
+        % more results-focused
+        % if I've noticed open directions, point them out
+    
+    In conclusion,
+        since the introduction of the term by Henry Massalin in \cite{massalin1987superoptimizer},
+        a wide variety of techniques have been harnessed to the goal of superoptimization,
+        which we have divided into two main categories by synthesis type:
+            symbolic and stochastic,
+        and five subcategories:
+            enumerative, SMT, CEGIS, MCMC, and reinforcement learning.
+    This is certainly not the only reasonable taxonomy for this problem.
+    One list of possible taxonomies is the following:
+        \begin{itemize}
+            \item the techniques used for synthesis, as in this paper;
+          % \item the techniques used for verification of generated programs;
+            \item the goals (optimization criteria) of the superoptimization system;
+            \item the problem domain;
+            \item the capabilities/limitations of the system.
+        \end{itemize}
+    We'll discuss each of these alternatives briefly.
+    
+    As we've discussed now at some length, superoptimizers can be categorized by the approach they take to synthesis of superoptimized programs.
+    This is the measure on which published systems vary most widely, and the selection of approach is perhaps the most salient question for the authors of new systems.
+    These approaches vary widely in sophistication, complexity, and power.
+    
+    There are quite a few possible criteria by which to rank candidate programs.
+    The most immediately salient is performance, and that is the one we have primarily focused on;
+    in almost every application, faster programs are preferred to slower ones.
+    However, performance is only one instance of another very reasonable goal, which is to reduce resource use.
+    There are a number of resources whose conservation might be desired, for example:
+    \begin{itemize}
+        \item time and/or number of computers required for a computation, as we've discussed;
+        \item memory usage;
+        \item functional units on an FPGA;
+        \item power or space on a hardware design;
+        \item disk writes;
+        \item or disk or network bandwidth.
+    \end{itemize}
+    To the best of our knowledge, most of these resources have not been the target of any published superoptimization system, mostly for good reasons;
+    nevertheless, this may be an interesting direction for future work.
+    A less-common criterion is to reduce the code size of generated programs.
+    This might be desired for reasons such as:
+    \begin{itemize}
+        \item performance (using number of instructions executed as a crude measure of computation time, as we've seen);
+        \item performance (improving performance directly by reducing instruction cache misses or instruction pipeline delays);
+        \item the output code is meant to run on a resource-poor system such as a microcontroller;
+        \item entertainment (``code golfing").
+    \end{itemize}
+    
+    Another way to categorize superoptimizers is by the limits they set on their problem domain.
+    For example, a common limitation is that the output code must be expressible in a loop-free way
+        -- loops are a difficult problem for many approaches, not least because verifying equivalence of programs with arbitrary loop conditions is in general undecidable \cite{turing1937tm} \cite{sipser2012computation}, and because heuristic testing of loops may require unbounded time.
+    
+    Another common limitation in superoptimizers is that it's very difficult to produce an accurate cost estimation for memory access.
+    Modern computer systems generally have many-layered information storage systems, with multiple layers of caching, batching, and indirection between them, making the estimation of latency for any particular memory access very difficult.
+    For this reason, black-box measurement of performance (running the code on physical hardware) is the gold standard, but this is sometimes cost-prohibitive.
+    For this reason many superoptimizers do not model programs which access memory in any way.
+    
+    Another limitation is that the overall difficulty of any search problem scales with the size of the search space, which in superoptimization scales exponentially with the length of the synthesized program.
+    Therefore most superoptimization systems are strongly limited by available computation power, and performance reasons impose a maximum practical synthesized program size.
+    This is particularly problematic when searching for constants; there may be dozens of possible operands for a register-to-register instruction, but an instruction with an embedded constant has $2^\text{bitwidth}$ possibilities.
+    Depending on the synthesis technique, this may be more or less of an issue; 
+    \textsc{Stoke} type synthesizers really struggle with constants, while CEGIS-types are designed to handle this issue.
+    
+    Another possible taxonomy is by problem domain.
+    Many superoptimizers focus on assembly programs with integer operands, because there are powerful techniques for verifying such programs, but by no means all.
+    There have also been interesting superoptimizers targeting 
+    \begin{itemize}
+        \item floating-point assembly programs, 
+        \item compiler intermediate representation (IR) programs, 
+        \item and high-level synthesis (HLS) languages for integrated circuit (IC) or field-programmable gate array (FPGA) development.
+    \end{itemize}
+    
+    Overall, each of the techniques we've seen has its own strengths and weaknesses, and there is no overall ``best" strategy invented so far. 
+    Enumerative superoptimizers have the benefit of simplicity at the cost of inefficiency;
+    SMT-type superoptimizers get to take advantage of the advances made in theorem-proving and SAT-solving technology, which is still an area of active research;
+    CEGIS-type superoptimizers build on SMT superoptimizers with a more advanced strategy for program synthesis;
+    \textsc{Stoke}-type superoptimizers are better-equipped to work on longer programs;
+    and RL-type superoptimizers get to take advantage of modern advances in machine learning models and parallel computing power.
+    One possible direction for future research is the use of two or more of these techniques in a cooperative superoptimizer, distinct from the one used in \cite{phothilimthana2016scaling} by using its subunits in a hierarchical rather than parallel way. For example, a CEGIS-type optimizer might use its own synthesis strategy for holes that it expects to be small, and a \textsc{Stoke}-type strategy for holes that it expects to be large.
 
 %\appendix
 %\chapter{Appendix 1}

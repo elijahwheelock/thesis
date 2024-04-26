@@ -418,9 +418,9 @@
 }
 
 @misc{
-    fog1996instructiontables,
+    fog2022instructiontables,
     author={Fog, Agner},
-    year={1996},
+    year={2022},
     title = {Software optimization resources: Instruction tables},
     url={https://www.agner.org/optimize/instruction_tables.pdf},
     journal={agner.org},
@@ -580,4 +580,64 @@
     publisher = {International Thomson Publishing},
     edition = {3rd},
 }
+
+@inproceedings{
+    gulwani2011loopfree,
+    author = {Gulwani, Sumit and Jha, Susmit and Tiwari, Ashish and Venkatesan, Ramarathnam},
+    title = {Synthesis of loop-free programs},
+    year = {2011},
+    isbn = {9781450306638},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    url = {https://doi.org/10.1145/1993498.1993506},
+    doi = {10.1145/1993498.1993506},
+    abstract = {We consider the problem of synthesizing loop-free programs that implement a desired functionality using components from a given library. Specifications of the desired functionality and the library components are provided as logical relations between their respective input and output variables. The library components can be used at most once, and hence the library is required to contain a reasonable overapproximation of the multiset of the components required.We solve the above component-based synthesis problem using a constraint-based approach that involves first generating a synthesis constraint, and then solving the constraint. The synthesis constraint is a first-order ∃∀ logic formula whose size is quadratic in the number of components. We present a novel algorithm for solving such constraints. Our algorithm is based on counterexample guided iterative synthesis paradigm and uses off-the-shelf SMT solvers.We present experimental results that show that our tool Brahma can efficiently synthesize highly nontrivial 10-20 line loop-free bitvector programs. These programs represent a state space of approximately 2010 programs, and are beyond the reach of the other tools based on sketching and superoptimization.},
+    booktitle = {Proceedings of the 32nd ACM SIGPLAN Conference on Programming Language Design and Implementation},
+    pages = {62–73},
+    numpages = {12},
+    keywords = {component-based synthesis, program synthesis, smt},
+    location = {San Jose, California, USA},
+    series = {PLDI '11}
+}
+
+@article{
+    detlefs2005simplify,
+    author = {Detlefs, David and Nelson, Greg and Saxe, James B.},
+    title = {Simplify: a theorem prover for program checking},
+    year = {2005},
+    issue_date = {May 2005},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    volume = {52},
+    number = {3},
+    issn = {0004-5411},
+    url = {https://doi.org/10.1145/1066100.1066102},
+    doi = {10.1145/1066100.1066102},
+    abstract = {This article provides a detailed description of the automatic theorem prover Simplify, which is the proof engine of the Extended Static Checkers ESC/Java and ESC/Modula-3. Simplify uses the Nelson--Oppen method to combine decision procedures for several important theories, and also employs a matcher to reason about quantifiers. Instead of conventional matching in a term DAG, Simplify matches up to equivalence in an E-graph, which detects many relevant pattern instances that would be missed by the conventional approach. The article describes two techniques, error context reporting and error localization, for helping the user to determine the reason that a false conjecture is false. The article includes detailed performance figures on conjectures derived from realistic program-checking problems.},
+    journal = {J. ACM},
+    month = {may},
+    pages = {365–473},
+    numpages = {109},
+    keywords = {Theorem proving, decision procedures, program checking}
+    }
+
+@article{
+    dpll1962theorem,
+    author = {Davis, Martin and Logemann, George and Loveland, Donald},
+    title = {A machine program for theorem-proving},
+    year = {1962},
+    issue_date = {July 1962},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    volume = {5},
+    number = {7},
+    issn = {0001-0782},
+    url = {https://doi.org/10.1145/368273.368557},
+    doi = {10.1145/368273.368557},
+    abstract = {The programming of a proof procedure is discussed in connection with trial runs and possible improvements.},
+    journal = {Commun. ACM},
+    month = {jul},
+    pages = {394–397},
+    numpages = {4}
+    }
 
