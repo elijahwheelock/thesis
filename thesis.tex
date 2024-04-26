@@ -4,14 +4,15 @@
 \usepackage{amssymb}
 \usepackage{amsthm}
 \usepackage{booktabs}
+\usepackage{caption}
+\usepackage{enumitem} 
+    \setlist[itemize]{itemsep=1pt}
 \usepackage{graphicx}
 \usepackage{latexsym} 
 \usepackage{longtable}
 \usepackage{rotating}
 \usepackage{setspace} 
 \usepackage{xcolor} 
-\usepackage{enumitem} 
-    \setlist[itemize]{itemsep=1pt}
 \usepackage{graphicx}
 \graphicspath{ {./images/} }
 \usepackage{ulem} % strikethrough
@@ -104,16 +105,20 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
     %   \red{TODO:} Chapter intro: what is symbolic search?
     %\\ \red{TODO:} talk about guaranteed progress, timeouts, etc.
     \green{
-    Perhaps the simplest possible approach, pioneered by \cite{massalin1987superoptimizer}, is simple enumeration. 
-    The technique is to line up all possible programs "alphabetically" in order of length, testing each in turn by the selected verification strategy. 
+    One straightforward possible strategy when faced with a superoptimization problem is to attempt to ``solve" it symbolically. 
+    Such approaches have the advantage that they will eventually find a solution, if one exists.
+    Since they make guaranteed progress, in theory the length of synthesized program is limited only by the user's patience and available computing power.
     }
+    
     \section{Enumeration}
         \subsection{Superoptimizer -- A Look at the Smallest Program}
-            Happily, the earliest published superoptimizer is also among the simplest, and so will serve admirably as an introduction to the idea.
-            The word ``superoptimizer" dates from Henry Massalin's paper, ``Superoptimizer -- A Look at the Smallest Program" \cite{massalin1987superoptimizer}.
-            Massalin's superoptimizer, like most superoptimizers, operates in three main phases: synthesis, pruning (optional), and verification.
+            \green{
+            Perhaps the simplest possible approach, pioneered by Henry Massalin in \cite{massalin1987superoptimizer}, is simple enumeration. 
+            The word ``superoptimizer" dates from this paper.
+            The technique is to line up all possible programs "alphabetically" in order of length, testing each in turn by the selected verification strategy. 
+            }
                 
-            The synthesis stage in this system is, perhaps, the simplest imaginable: simply write down all assembly programs in alphabetical order.
+            The synthesis stage in this system is the simplest imaginable: simply write down all assembly programs in alphabetical order.
             The advantage of this approach is that if a result is found, it will be the smallest possible code that can compute the desired result.
             In the loop-free case, this is likely also the fastest result -- running fewer instructions is generally preferable.
             However, on many architectures, the latency for instructions varies -- for example, division may be more expensive than multiplication, which may be more expensive than addition \cite{fog2022instructiontables}.
@@ -206,9 +211,29 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
         \subsection{Unbounded Superoptimization}
             A more modern take on a similar approach to Denali is the work by Jangda and Yorsh in ``Unbounded Superoptimization" \cite{jangda2017unbounded}.
             Rather than matching E-graphs, which in the intervening years had been integrated into SMT solvers, it directly encodes the target program as a logical formula.
-            It does this by encoding the input program, treating it as the first candidate output, and
-                \addressed{``squeezing" it by imposing lower and lower cost bounds on the solver}{I would make this a bit more explicit--how exactly are computational bounds encoded and how does the tool decide what bounds to use?}.
+            It does this by encoding the input program, treating it as the first candidate output, and ``squeezing" it by imposing lower and lower cost bounds on the solver.
             This ``top-down" approach has the advantage that if the superoptimizer is halted early, it can still return a correct output, unlike many superoptimizers which work ``bottom-up" and thus start without any candidate programs.
+
+            \green{
+            There are three types of constraints in the model:
+                the semantics of the input code $p$;
+                the semantics of an arbitrary bounded-length instruction sequence in the target architecture $a$;
+                and an equivalence constraint $o$ that enforces the property that the output program have the same observable behavior as the input.
+            Then the input to the solver at each step is of the form 
+            \[
+                \forall x, x', y, y' ~:~ \hat{p} \wedge \hat{a} \wedge \hat{o}
+            \]
+                where $\hat{p}$ is a symbolic representation of $p$;
+                $x$ and $x'$ are the input and output of $p$ respectively;
+                $y$ and $y'$ are the input and output of the candidate program;
+                $\hat{o}$ is the observable equivalence constraint;
+                and $\hat{a}$ is the symbolic representation of the semantics of $a$, which can be paraphrased as 
+            \[
+                \hat{a} := \forall j < n \;:\; \bigwedge_{i \in I} \left((j^\text{th} \text{ instruction is } i) \Rightarrow [(\text{state at time } j + 1) = \tau_i(\text{state at time }j)]\right)
+            \]
+            where $n$ is the length of the candidate to generate, $I$ is the set of possible instructions in $a$, and $\tau_i$ is the semantics of instruction $i$.
+            The ``squeezing'' step is accomplished by adding an additional constraint that $n < n'$, where $n'$ is the length of the current best candidate.
+            }
             
             Jangda and Yorsh tested their technique on a set of problems from Hacker's Delight \cite{warren2013hackers}.
             They successfully generated optimal code for 17 of 25 problems, and failed for 8.
@@ -417,14 +442,31 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
         \textsc{Lens}, a new enumerative superoptimization algorithm,
         a sliding-window strategy to decompose programs too large to superoptimize directly,
         and a synthesizer combining communicating symbolic, stochastic, and enumerative search programs.
-        Verification is accomplished by an equivalence requirement in the pruning step.
         
-        \textsc{Lens} is an enumerative algorithm which uses a bi-directional (pre- and post-conditional) pruning strategy to cut down the search space.
-        It works by considering the space of programs to enumerate as composed of a set of equivalence classes of input-output behaviors on a reduced bitwidth, and attempting to bridge the gap between the input and the output of the specification.
-        If such a bridge is found, it is verified using a constraint solver;
-                if accepted, it's returned,
-                but if rejected, the constraint solver returns an input counterexample,
-            which is then used as a test case to prune \comment{further candidates}{The description of Lens could be more detailed}.
+        \green{
+        \textsc{Lens} is an enumerative algorithm.
+        It builds up candidate programs from both forwards and backwards directions, by working from the input/output pairs from a set of test cases.
+        When it finds a program bridging between the input and output, it attempts to verify it using an SMT solver.
+            If the solver verifies it, then it's a correct instantiation of the specification, and so it's returned.
+            If the solver finds a counterexample input, that input and its corresponding output are added to the set of test cases from which new candidates will be generated.
+        }
+
+        \green{
+        When generating candidate programs it uses a reduced bitwidth.
+        In their experiments, this reduced 32-bit programs to 4 bits.
+        This simplifies the implementation of the reverse synthesis step; instead of needing a reverse emulator they can get away with a lookup table for $2^4$ input/output pairs for each instruction.
+        This also mitigates the combinatorial explosion from backwards synthesis -- an instruction in the forward direction is one-to-one, but in the backward direction this is not necessarily the case. 
+        For a simple two-bit example, suppose our input $11$ is the left-hand side in the equation $11 \wedge 01 = 01$.
+        In the forward direction this is fully known.
+        But since we lose information in the forward direction, in the reverse direction we have multiple possible completions for the left-hand side -- in particular, it's impossible to know if the input should have been $01$ or $11$.
+        Therefore \textsc{Lens} must track both possibilities if it's to guarantee finding a solution (if one exists).
+        This explosion of possibilities is much, much worse in 32 bits than in 2 or 4!
+        }
+
+        \green{
+        \textsc{Lens} accomplishes the bitwidth reduction by simply replacing each constant $c$ with $c \mod 2^\text{bitwidth}$, unless $c$ is a shift operand, in which case it does some special processing meant to preserve the semantics of shift operations in the newly-reduced domain.
+        This replacement is memorized, so that it can be undone when it's time to verify a candidate.
+        }
         
         The sliding window strategy is fairly simple; it randomly picks a window of the program to superoptimize, attempts to improve it, and repeats until no position of the window yields an improvement to the program.
         There is one additional detail that bears mentioning: 
@@ -444,6 +486,7 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
         The communication between synthesizers takes the form of a shared best solution, $p_{best}$.
         The whole-program \textsc{Lens} and SMT synthesizers don't use $p_{best}$. The others restart their synthesis, using $p_{best}$ as the new starting point instead of the target.
         
+        \green{
         Phothilimthana et al. tested the components of their system in a variety of ways. We have summarized the most interesting results in the following list:
         \begin{itemize}
             \item They tested \textsc{Stoke} vs the whole-program SMT solver vs whole-program \textsc{Lens}; they found that \textsc{Lens} was faster and solved more of their benchmark programs than their implementations of either of the others.
@@ -452,20 +495,23 @@ I'd like to thank Greg, Tobey, Jennifer, Arthur, Norman, Susan, and Elise.
             \item They tested their whole cooperative system vs a system running one whole-program \textsc{Lens} instance and a large number of sliding-window \textsc{Lens} instances, providing equal computational resources to both systems; they found that the cooperative superoptimizer was 33\% faster and solved\footnote{matched best-known solutions for} more of their benchmark problems.
             \item They tested the speed of the code generated by their system against that generated by \texttt{gcc -O3} and found that their code met or exceeded \texttt{gcc}'s on all benchmark programs.
         \end{itemize}
+        }
         
-        \begin{figure}
-            \centering
-            %\textbf{Your title}\par\medskip
+        \begin{center}
             \includegraphics[scale=0.5]{scaling}
-            \caption{An example comparison of the process of optimizing a program by five different superoptimizers: 'symbolic' is an SMT solver; 'stoch\_s' and 'stoch\_o' are \textsc{Stoke} starting from a random program and from the specification respectively; 'enum' is \textsc{Lens}; 'cooperative' is the whole system together.}
-        \end{figure}
+            \captionof{figure}{ \green{ An example comparison of the process of optimizing a program by five different superoptimizers: 'symbolic' is an SMT solver; 'stoch\_s' and 'stoch\_o' are \textsc{Stoke} starting from a random program and from the specification respectively; 'enum' is \textsc{Lens}; 'cooperative' is the whole system together.} }
+        \end{center}
 
     % on backburner
     %\subsection{Sound Loop Superoptimization for Google Native Client}
     %\cite{churchill2017soundloop}
 
     \section{Reinforcement Learning}
-        Reinforcement learning is a machine learning paradigm useful for cases when the structure of a problem is not straightforwardly numeric, but an objective function of the success/failure of an attempted output is available. This function is called the reward/loss function, depending on its sign. In such cases neural networks may be trained by gradient ascent on the reward function or gradient descent on the loss function.
+        \green{
+        Machine learning using neural networks is a field which has seen significant successes in recent years, so it's only natural that we should see attempts to use it for superoptimization. 
+        }
+        Reinforcement learning is a machine learning paradigm useful for cases when the structure of a problem is not straightforwardly numeric, but an objective function of the success/failure of an attempted output is available.
+        This function is called the reward/loss function, depending on its sign. In such cases neural networks may be trained by gradient ascent on the reward function or gradient descent on the loss function.
         % REINFORCE: REward Increment = Non-negative Factor $\times$ Offset Reinforcement $\times$ Characteristic Eligibility
         % for RL focus on loss/reward fn
         
